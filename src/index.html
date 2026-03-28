@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Screen Time Tracker Dashboard</title>
+    <script type="module" src="/main.js" defer></script>
+  </head>
+
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-top">
+          <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Toggle sidebar">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <h1 class="brand">Screen Time</h1>
+        </div>
+
+        <nav class="side-nav" aria-label="Primary">
+          <button class="nav-link active" type="button" data-page="overview">
+            <span class="icon">&#9679;</span>
+            <span class="label">Genel Bakis</span>
+          </button>
+
+          <div class="nav-group open" id="analytics-group">
+            <button class="nav-group-trigger" id="analytics-trigger" type="button" aria-expanded="true">
+              <span class="icon">&#9724;</span>
+              <span class="label">Analitik</span>
+              <span class="caret">&#9662;</span>
+            </button>
+            <div class="nav-group-items" id="analytics-items">
+              <button class="nav-link" type="button" data-page="apps">
+                <span class="icon">&#9632;</span>
+                <span class="label">Uygulama Kullanimi</span>
+              </button>
+              <button class="nav-link" type="button" data-page="hourly">
+                <span class="icon">&#9632;</span>
+                <span class="label">Saatlik Trend</span>
+              </button>
+              <button class="nav-link" type="button" data-page="focus">
+                <span class="icon">&#9632;</span>
+                <span class="label">Odak Oturumlari</span>
+              </button>
+            </div>
+          </div>
+
+          <button class="nav-link" type="button" data-page="goals">
+            <span class="icon">&#9651;</span>
+            <span class="label">Hedefler</span>
+          </button>
+
+          <button class="nav-link" type="button" data-page="notes">
+            <span class="icon">&#9671;</span>
+            <span class="label">Notlar</span>
+          </button>
+        </nav>
+      </aside>
+
+      <section class="content-area">
+        <header class="topbar">
+          <h2 id="page-title">Genel Bakis</h2>
+          <p>28 Mart 2026</p>
+        </header>
+
+        <section class="page active" id="page-overview" aria-label="Overview page">
+          <div class="cards-grid">
+            <article class="card">
+              <h3>Toplam Ekran Suresi</h3>
+              <p>6h 42m</p>
+            </article>
+            <article class="card">
+              <h3>Uretken Sure</h3>
+              <p>4h 18m</p>
+            </article>
+            <article class="card">
+              <h3>Mola Sayisi</h3>
+              <p>7</p>
+            </article>
+            <article class="card">
+              <h3>En Uzun Oturum</h3>
+              <p>1h 25m</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" id="page-apps" aria-label="App usage page">
+          <article class="panel">
+            <h3>En Cok Kullanilan Uygulamalar</h3>
+            <ul>
+              <li><strong>VS Code</strong>: 2h 10m</li>
+              <li><strong>Chrome</strong>: 1h 45m</li>
+              <li><strong>Slack</strong>: 52m</li>
+              <li><strong>Spotify</strong>: 38m</li>
+            </ul>
+          </article>
+        </section>
+
+        <section class="page" id="page-hourly" aria-label="Hourly trend page">
+          <article class="panel">
+            <h3>Saatlik Aktivite Trendi</h3>
+            <p>08:00 - 12:00: Yuksek odak</p>
+            <p>12:00 - 14:00: Mola ve toplantilar</p>
+            <p>14:00 - 18:00: Orta seviye uretkenlik</p>
+          </article>
+        </section>
+
+        <section class="page" id="page-focus" aria-label="Focus session page">
+          <article class="panel">
+            <h3>Odak Oturumlari</h3>
+            <ol>
+              <li>09:00 - 10:20 Deep Work</li>
+              <li>11:00 - 12:10 Coding Sprint</li>
+              <li>15:00 - 16:15 Bug Fixing</li>
+            </ol>
+          </article>
+        </section>
+
+        <section class="page" id="page-goals" aria-label="Goals page">
+          <article class="panel">
+            <h3>Gunluk Hedefler</h3>
+            <ul>
+              <li>Sosyal medya suresini 30 dakikada tut</li>
+              <li>Her saat basi 5 dakika mola ver</li>
+              <li>Uretken sureyi 4 saatin ustunde tut</li>
+            </ul>
+          </article>
+        </section>
+
+        <section class="page" id="page-notes" aria-label="Notes page">
+          <article class="panel">
+            <h3>Hizli Not</h3>
+            <form class="row" id="greet-form">
+              <input id="greet-input" placeholder="Notunu yaz..." />
+              <button type="submit">Kaydet</button>
+            </form>
+            <p id="greet-msg"></p>
+          </article>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

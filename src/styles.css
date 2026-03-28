@@ -1,0 +1,297 @@
+:root {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 500;
+  color: #1a2438;
+  background: radial-gradient(circle at top left, #f6faf4 0%, #e8f0ee 45%, #dde6eb 100%);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+}
+
+.sidebar {
+  width: 280px;
+  background: linear-gradient(180deg, #0f1c30 0%, #172a46 100%);
+  color: #e5eef8;
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  transition: width 0.25s ease;
+}
+
+.sidebar.collapsed {
+  width: 84px;
+}
+
+.sidebar-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-toggle {
+  border: 1px solid #385577;
+  background: #213754;
+  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 11px;
+  box-shadow: none;
+}
+
+.sidebar-toggle span {
+  width: 100%;
+  height: 2px;
+  background: #d9e8f9;
+  display: block;
+}
+
+.brand {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-link,
+.nav-group-trigger {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  cursor: pointer;
+  text-align: left;
+  box-shadow: none;
+}
+
+.nav-link:hover,
+.nav-group-trigger:hover {
+  background: rgba(128, 176, 224, 0.14);
+  border-color: rgba(172, 207, 240, 0.35);
+}
+
+.nav-link.active {
+  background: rgba(78, 158, 229, 0.2);
+  border-color: rgba(128, 196, 255, 0.5);
+}
+
+.nav-group-items {
+  display: none;
+  margin-top: 4px;
+  padding-left: 14px;
+}
+
+.nav-group.open .nav-group-items {
+  display: block;
+}
+
+.caret {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+}
+
+.nav-group.open .caret {
+  transform: rotate(180deg);
+}
+
+.icon {
+  width: 18px;
+  text-align: center;
+  opacity: 0.92;
+}
+
+.sidebar.collapsed .label,
+.sidebar.collapsed .brand,
+.sidebar.collapsed .caret {
+  display: none;
+}
+
+.sidebar.collapsed .nav-link,
+.sidebar.collapsed .nav-group-trigger {
+  justify-content: center;
+}
+
+.sidebar.collapsed .nav-group-items {
+  display: none;
+}
+
+.content-area {
+  flex: 1;
+  padding: 28px;
+}
+
+.topbar {
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.topbar h2 {
+  margin: 0;
+  font-size: 1.7rem;
+}
+
+.topbar p {
+  margin: 0;
+  color: #4f647c;
+}
+
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+}
+
+.card,
+.panel {
+  border: 1px solid #ccd8e2;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.86);
+  padding: 18px;
+  box-shadow: 0 10px 24px rgba(44, 70, 98, 0.08);
+}
+
+.card h3,
+.panel h3 {
+  margin: 0 0 10px;
+}
+
+.card p {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.panel ul,
+.panel ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.panel p {
+  margin: 0 0 10px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+input,
+button {
+  border-radius: 10px;
+  border: 1px solid #bfd0df;
+  padding: 0.65em 1em;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: #1a2438;
+  background-color: #f9fcff;
+  transition: border-color 0.25s;
+}
+
+input {
+  flex: 1;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: #5a9ddf;
+}
+
+button:active {
+  background-color: #edf5fc;
+}
+
+input,
+button {
+  outline: none;
+}
+
+#greet-msg {
+  min-height: 24px;
+  margin-top: 10px;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .sidebar,
+  .sidebar.collapsed {
+    width: 100%;
+  }
+
+  .sidebar.collapsed .label,
+  .sidebar.collapsed .brand,
+  .sidebar.collapsed .caret {
+    display: initial;
+  }
+
+  .sidebar.collapsed .nav-link,
+  .sidebar.collapsed .nav-group-trigger {
+    justify-content: flex-start;
+  }
+
+  .content-area {
+    padding: 18px;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
