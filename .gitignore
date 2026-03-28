@@ -41,5 +41,5 @@ dist/
 .DS_Store
 Thumbs.db
 
-# VS Code (isteğe bağlı, paylaşmak istersen kaldır)
+# VS Code
 .vscode/
