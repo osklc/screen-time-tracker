@@ -88,6 +88,56 @@ fn normalize_app_name(raw_name: &str, title: &str) -> String {
     cleaned
 }
 
+fn should_ignore_window(app_name: &str, title: &str) -> bool {
+    let name_lower = app_name.to_lowercase();
+    let title_lower = title.to_lowercase();
+    
+    // Skip empty or whitespace-only names/titles
+    if app_name.trim().is_empty() || title.trim().is_empty() {
+        return true;
+    }
+    
+    // Skip known transient/system windows
+    let ignored_titles = [
+        "bir uygulama seçin",
+        "task switching",
+        "task view",
+        "dosya gezgini",
+        "program manager",
+        "windows input experience",
+        "new notification",
+        "start",
+        "search",
+        "görev görünümü",
+        "başlat",
+    ];
+    
+    let ignored_names = [
+        "applicationframehost",
+        "shellexperiencehost",
+        "startmenuexperiencehost",
+        "lockapp",
+        "textinputhost",
+        "searchui",
+        "cortana",
+        "systemsettings",
+    ];
+    
+    for ignored in &ignored_titles {
+        if title_lower == *ignored {
+            return true;
+        }
+    }
+    
+    for ignored in &ignored_names {
+        if name_lower.contains(ignored) {
+            return true;
+        }
+    }
+    
+    false
+}
+
 fn init_db(app_handle: &tauri::AppHandle) -> SqlResult<Connection> {
     let app_data_dir = app_handle.path().app_data_dir().expect("Failed to get app data dir");
     if !app_data_dir.exists() {
@@ -280,6 +330,53 @@ pub fn run() {
         .setup(|app| {
             let app_handle = app.handle().clone();
             
+            // ── System Tray ──
+            let tray_handle = app.handle().clone();
+            let show_item = tauri::menu::MenuItem::with_id(app, "show", "Göster", true, None::<&str>)?;
+            let quit_item = tauri::menu::MenuItem::with_id(app, "quit", "Çıkış", true, None::<&str>)?;
+            let menu = tauri::menu::Menu::with_items(app, &[&show_item, &quit_item])?;
+            
+            let icon = app.default_window_icon().cloned().unwrap();
+            let _tray = tauri::tray::TrayIconBuilder::new()
+                .icon(icon)
+                .menu(&menu)
+                .tooltip("Screen Time Tracker")
+                .on_menu_event(move |app, event| {
+                    match event.id().as_ref() {
+                        "show" => {
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                        "quit" => {
+                            app.exit(0);
+                        }
+                        _ => {}
+                    }
+                })
+                .on_tray_icon_event(|tray, event| {
+                    if let tauri::tray::TrayIconEvent::DoubleClick { .. } = event {
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                })
+                .build(app)?;
+
+            // ── Close to tray instead of quitting ──
+            let window = app.get_webview_window("main").unwrap();
+            window.on_window_event(move |event| {
+                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                    api.prevent_close();
+                    if let Some(win) = tray_handle.get_webview_window("main") {
+                        let _ = win.hide();
+                    }
+                }
+            });
+            
             let conn = init_db(&app_handle).expect("Failed to initialize DB");
             
             std::thread::spawn(move || {
@@ -293,7 +390,15 @@ pub fn run() {
                     let mut new_app_name = String::new();
                     
                     if let Some(window) = &active_window {
-                        new_app_name = normalize_app_name(&window.app_name, &window.title);
+                        let raw_name = &window.app_name;
+                        let raw_title = &window.title;
+                        
+                        if should_ignore_window(raw_name, raw_title) {
+                            std::thread::sleep(std::time::Duration::from_secs(3));
+                            continue;
+                        }
+                        
+                        new_app_name = normalize_app_name(raw_name, raw_title);
                         
                         let payload = ActiveWindowPayload {
                             title: window.title.clone(),

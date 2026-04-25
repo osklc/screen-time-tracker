@@ -74,6 +74,13 @@
           </div>
         </div>
 
+        <button class="nav-link" type="button" data-page="pomodoro">
+          <svg class="icon" aria-hidden="true" focusable="false">
+            <use href="/assets/sidebar-icons.svg#icon-pomodoro"></use>
+          </svg>
+          <span class="label" data-i18n="nav.pomodoro">Pomodoro</span>
+        </button>
+
         <button class="nav-link" type="button" data-page="goals">
           <svg class="icon" aria-hidden="true" focusable="false">
             <use href="/assets/sidebar-icons.svg#icon-goals"></use>
@@ -154,6 +161,64 @@
             <li data-i18n="focus.item2">11:00 - 12:10 Coding Sprint</li>
             <li data-i18n="focus.item3">15:00 - 16:15 Bug Fixing</li>
           </ol>
+        </article>
+      </section>
+
+      <section class="page" id="page-pomodoro" aria-label="Pomodoro timer page">
+        <article class="panel pomodoro-container">
+          <h3 data-i18n="pomodoro.title">Pomodoro Timer</h3>
+
+          <div class="pomodoro-timer-wrapper">
+            <svg class="pomodoro-ring" viewBox="0 0 200 200">
+              <circle class="pomodoro-ring-bg" cx="100" cy="100" r="90" />
+              <circle class="pomodoro-ring-progress" id="pomo-ring" cx="100" cy="100" r="90" />
+            </svg>
+            <div class="pomodoro-time-display">
+              <span id="pomo-time">25:00</span>
+              <span class="pomodoro-mode-label" id="pomo-mode-label" data-i18n="pomodoro.focus">Focus</span>
+            </div>
+          </div>
+
+          <div class="pomodoro-controls">
+            <button type="button" id="pomo-start" class="pomo-btn pomo-btn-start"
+              data-i18n="pomodoro.start">Start</button>
+            <button type="button" id="pomo-pause" class="pomo-btn pomo-btn-pause" style="display:none;"
+              data-i18n="pomodoro.pause">Pause</button>
+            <button type="button" id="pomo-reset" class="pomo-btn pomo-btn-reset"
+              data-i18n="pomodoro.reset">Reset</button>
+          </div>
+
+          <div class="pomodoro-stats">
+            <h4 data-i18n="pomodoro.todayStats">Today's Stats</h4>
+            <div class="pomo-stat-grid">
+              <div class="pomo-stat">
+                <span class="pomo-stat-value" id="pomo-sessions">0</span>
+                <span class="pomo-stat-label" data-i18n="pomodoro.sessionsCompleted">Sessions Completed</span>
+              </div>
+              <div class="pomo-stat">
+                <span class="pomo-stat-value" id="pomo-focus-time">0m</span>
+                <span class="pomo-stat-label" data-i18n="pomodoro.totalFocusTime">Total Focus Time</span>
+              </div>
+              <div class="pomo-stat">
+                <span class="pomo-stat-value" id="pomo-breaks">0</span>
+                <span class="pomo-stat-label" data-i18n="pomodoro.breaksTaken">Breaks Taken</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pomodoro-settings">
+            <h4 data-i18n="pomodoro.settings">Timer Settings</h4>
+            <div class="pomo-setting-grid">
+              <label data-i18n="pomodoro.focusDuration">Focus Duration (min)</label>
+              <input type="number" id="pomo-focus-dur" min="1" max="120" value="25" />
+              <label data-i18n="pomodoro.shortBreakDuration">Short Break (min)</label>
+              <input type="number" id="pomo-short-dur" min="1" max="30" value="5" />
+              <label data-i18n="pomodoro.longBreakDuration">Long Break (min)</label>
+              <input type="number" id="pomo-long-dur" min="1" max="60" value="15" />
+              <label data-i18n="pomodoro.longBreakAfter">Long Break After (sessions)</label>
+              <input type="number" id="pomo-long-after" min="1" max="10" value="4" />
+            </div>
+          </div>
         </article>
       </section>
 

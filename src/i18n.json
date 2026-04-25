@@ -67,7 +67,25 @@
       "settings.noApps": "No apps tracked yet.",
       "apps.noActivity": "No activity tracked for today yet.",
       "duration.hours": "h",
-      "duration.minutes": "m"
+      "duration.minutes": "m",
+      "nav.pomodoro": "Pomodoro",
+      "pages.pomodoro": "Pomodoro Timer",
+      "pomodoro.title": "Pomodoro Timer",
+      "pomodoro.start": "Start",
+      "pomodoro.pause": "Pause",
+      "pomodoro.reset": "Reset",
+      "pomodoro.focus": "Focus",
+      "pomodoro.shortBreak": "Short Break",
+      "pomodoro.longBreak": "Long Break",
+      "pomodoro.sessionsCompleted": "Sessions Completed",
+      "pomodoro.totalFocusTime": "Total Focus Time",
+      "pomodoro.breaksTaken": "Breaks Taken",
+      "pomodoro.focusDuration": "Focus Duration (min)",
+      "pomodoro.shortBreakDuration": "Short Break (min)",
+      "pomodoro.longBreakDuration": "Long Break (min)",
+      "pomodoro.longBreakAfter": "Long Break After (sessions)",
+      "pomodoro.todayStats": "Today's Stats",
+      "pomodoro.settings": "Timer Settings"
     },
     "tr": {
       "brand.title": "Ekran Süresi",
@@ -135,7 +153,25 @@
       "settings.noApps": "Henüz takip edilen uygulama yok.",
       "apps.noActivity": "Bugün için henüz aktivite kaydedilmedi.",
       "duration.hours": "s",
-      "duration.minutes": "d"
+      "duration.minutes": "d",
+      "nav.pomodoro": "Pomodoro",
+      "pages.pomodoro": "Pomodoro Zamanlayıcı",
+      "pomodoro.title": "Pomodoro Zamanlayıcı",
+      "pomodoro.start": "Başlat",
+      "pomodoro.pause": "Duraklat",
+      "pomodoro.reset": "Sıfırla",
+      "pomodoro.focus": "Odak",
+      "pomodoro.shortBreak": "Kısa Mola",
+      "pomodoro.longBreak": "Uzun Mola",
+      "pomodoro.sessionsCompleted": "Tamamlanan Oturumlar",
+      "pomodoro.totalFocusTime": "Toplam Odak Süresi",
+      "pomodoro.breaksTaken": "Alınan Molalar",
+      "pomodoro.focusDuration": "Odak Süresi (dk)",
+      "pomodoro.shortBreakDuration": "Kısa Mola (dk)",
+      "pomodoro.longBreakDuration": "Uzun Mola (dk)",
+      "pomodoro.longBreakAfter": "Uzun Mola Sonrası (oturum)",
+      "pomodoro.todayStats": "Bugünün İstatistikleri",
+      "pomodoro.settings": "Zamanlayıcı Ayarları"
     }
   }
 }
