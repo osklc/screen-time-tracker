@@ -90,13 +90,15 @@ async function fetchAndRenderSummary() {
   const statProdEl = document.getElementById("stat-productive-time");
   const statBreakEl = document.getElementById("stat-break-count");
   const statLongestEl = document.getElementById("stat-longest-session");
+  const statDistEl = document.getElementById("stat-distracting-time");
 
-  if (!statTotalEl || !statProdEl || !statBreakEl || !statLongestEl) return;
+  if (!statTotalEl || !statProdEl || !statBreakEl || !statLongestEl || !statDistEl) return;
 
   try {
     const summary = await invoke("get_today_summary");
     statTotalEl.textContent = formatDuration(summary.total_screen_time_seconds);
     statProdEl.textContent = formatDuration(summary.productive_time_seconds);
+    statDistEl.textContent = formatDuration(summary.distracting_time_seconds);
 
     // Break count comes from Pomodoro
     const pomoStats = loadPomodoroStats();

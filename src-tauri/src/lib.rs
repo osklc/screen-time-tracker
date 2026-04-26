@@ -16,6 +16,7 @@ struct ActiveWindowPayload {
 struct TodaySummary {
     total_screen_time_seconds: i64,
     productive_time_seconds: i64,
+    distracting_time_seconds: i64,
     break_count: i64,
     longest_session_seconds: i64,
 }
@@ -34,6 +35,12 @@ struct DailyStat {
 struct CurrentSession {
     app_name: String,
     start_time: i64,
+    last_title: String,
+    last_title_change: i64,
+    short_view_count: u32,
+    is_youtube: bool,
+    category_override: Option<String>,
+    needs_review: bool,
 }
 
 fn normalize_app_name(raw_name: &str, title: &str) -> String {
@@ -53,15 +60,39 @@ fn normalize_app_name(raw_name: &str, title: &str) -> String {
             "Firefox"
         };
         
-        if title_lower.contains("stackoverflow") || title_lower.contains("github") || title_lower.contains("university") {
-            return format!("{} (Productive)", base_name);
-        } else if title_lower.contains("twitch") {
-            return format!("{} (Twitch)", base_name);
+        if title_lower.contains("stackoverflow") {
+            return format!("{} (StackOverflow)", base_name);
+        } else if title_lower.contains("github") {
+            return format!("{} (GitHub)", base_name);
+        } else if let Some(site) = ["chatgpt", "claude", "gemini", "perplexity", "deepseek", "scholar", "jstor", "dergipark"]
+           .iter().find(|&&k| title_lower.contains(k)) {
+            let site_name = match *site {
+                "chatgpt" => "ChatGPT",
+                "scholar" => "Google Scholar",
+                "dergipark" => "DergiPark",
+                s => &format!("{}{}", &s[..1].to_uppercase(), &s[1..]),
+            };
+            return format!("{} ({})", base_name, site_name);
+        } else if let Some(site) = ["instagram", "facebook", "twitter", "x.com", "tiktok", "reddit", "twitch"]
+           .iter().find(|&&k| title_lower.contains(k)) {
+            let site_name = match *site {
+                "x.com" => "Twitter",
+                "twitter" => "Twitter",
+                "tiktok" => "TikTok",
+                s => &format!("{}{}", &s[..1].to_uppercase(), &s[1..]),
+            };
+            return format!("{} ({})", base_name, site_name);
         } else if title_lower.contains("youtube") {
-            if title_lower.contains("shorts") {
-                return format!("{} (YouTube Shorts)", base_name);
-            } else if title_lower.contains("ders") || title_lower.contains("eğitim") || title_lower.contains("tutorial") || title_lower.contains("software") || title_lower.contains("lecture") || title_lower.contains("üniversite") {
-                return format!("{} (YouTube Edu)", base_name);
+            let is_productive = ["ders", "eğitim", "tutorial", "course", "lecture", "konu anlatımı", "nasıl yapılır", "belgesel", "coding"]
+                .iter().any(|&k| title_lower.contains(k));
+                
+            let is_distracting = ["shorts", "gameplay", "komik", "parodi", "müzik", "official video", "trailer", "twitch"]
+                .iter().any(|&k| title_lower.contains(k));
+
+            if is_productive {
+                return format!("{} (YouTube Productive)", base_name);
+            } else if is_distracting {
+                return format!("{} (YouTube Distracting)", base_name);
             } else {
                 return format!("{} (YouTube)", base_name);
             }
@@ -86,8 +117,16 @@ fn normalize_app_name(raw_name: &str, title: &str) -> String {
         return "Epic Games".to_string();
     } else if raw_lower.contains("unity") {
         return "Unity".to_string();
-    } else if raw_lower.contains("antigravity") {
+    } else if raw_lower.contains("antigravity") || raw_lower.contains("cursor") {
         return "Antigravity".to_string();
+    } else if raw_lower.contains("obsidian") {
+        return "Obsidian".to_string();
+    } else if raw_lower.contains("evernote") {
+        return "Evernote".to_string();
+    } else if raw_lower.contains("onenote") {
+        return "OneNote".to_string();
+    } else if raw_lower.contains("acrobat") || raw_lower.contains("reader") || title_lower.contains(".pdf") {
+        return "Adobe Acrobat".to_string();
     } else if raw_lower.contains("kairos") || raw_lower.contains("screen-time-tracker") {
         return "Kairos".to_string();
     } else if raw_lower.contains("searchhost") {
@@ -189,6 +228,9 @@ fn init_db(app_handle: &tauri::AppHandle) -> SqlResult<Connection> {
         )",
         [],
     )?;
+    let _ = conn.execute("ALTER TABLE sessions ADD COLUMN category_override TEXT", []);
+    let _ = conn.execute("ALTER TABLE sessions ADD COLUMN needs_review BOOLEAN DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE sessions ADD COLUMN window_title TEXT", []);
     
     Ok(conn)
 }
@@ -213,17 +255,73 @@ fn get_today_summary(app_handle: tauri::AppHandle) -> Result<TodaySummary, Strin
     let mut prod_stmt = conn.prepare(
         "SELECT SUM(s.end_time - s.start_time) 
          FROM sessions s
-         JOIN app_categories c ON s.app_name = c.app_name
-         WHERE s.end_time >= ?1 AND c.category = 'productive'"
+         LEFT JOIN app_categories c ON s.app_name = c.app_name
+         WHERE s.end_time >= ?1 AND COALESCE(s.category_override, c.category) = 'productive'"
     ).map_err(|e| e.to_string())?;
     let productive_time_seconds: i64 = prod_stmt.query_row([today_start], |row| row.get(0)).unwrap_or(0);
+
+    let mut dist_stmt = conn.prepare(
+        "SELECT SUM(s.end_time - s.start_time) 
+         FROM sessions s
+         LEFT JOIN app_categories c ON s.app_name = c.app_name
+         WHERE s.end_time >= ?1 AND COALESCE(s.category_override, c.category) = 'distracting'"
+    ).map_err(|e| e.to_string())?;
+    let distracting_time_seconds: i64 = dist_stmt.query_row([today_start], |row| row.get(0)).unwrap_or(0);
 
     Ok(TodaySummary {
         total_screen_time_seconds,
         productive_time_seconds,
+        distracting_time_seconds,
         break_count: 0, // Handled by separate Pomodoro logic later
         longest_session_seconds,
     })
+}
+
+#[derive(Serialize)]
+struct PendingReview {
+    id: i64,
+    app_name: String,
+    window_title: Option<String>,
+    duration_seconds: i64,
+}
+
+#[tauri::command]
+fn get_pending_reviews(app_handle: tauri::AppHandle) -> Result<Vec<PendingReview>, String> {
+    let db_path = app_handle.path().app_data_dir().unwrap().join("tracker.db");
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+    
+    let mut stmt = conn.prepare("SELECT id, app_name, window_title, (end_time - start_time) as duration FROM sessions WHERE needs_review = 1 ORDER BY id DESC").map_err(|e| e.to_string())?;
+    
+    let rows = stmt.query_map([], |row| {
+        Ok(PendingReview {
+            id: row.get(0)?,
+            app_name: row.get(1)?,
+            window_title: row.get(2)?,
+            duration_seconds: row.get(3)?,
+        })
+    }).map_err(|e| e.to_string())?;
+    
+    let mut reviews = Vec::new();
+    for row in rows {
+        if let Ok(val) = row {
+            reviews.push(val);
+        }
+    }
+    
+    Ok(reviews)
+}
+
+#[tauri::command]
+fn resolve_review(app_handle: tauri::AppHandle, id: i64, category: String) -> Result<(), String> {
+    let db_path = app_handle.path().app_data_dir().unwrap().join("tracker.db");
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+    
+    conn.execute(
+        "UPDATE sessions SET category_override = ?1, needs_review = 0 WHERE id = ?2",
+        params![category, id],
+    ).map_err(|e| e.to_string())?;
+    
+    Ok(())
 }
 
 #[tauri::command]
@@ -463,21 +561,44 @@ pub fn run() {
                         let _ = app_handle.emit("active_window", payload);
                     }
                     
-                    if let Some(session) = &current_session {
+                    if let Some(session) = &mut current_session {
                         if session.app_name != new_app_name {
                             changed = true;
+                        } else if let Some(window) = &active_window {
+                            if session.is_youtube && session.last_title != window.title {
+                                let time_spent = now - session.last_title_change;
+                                if time_spent < 60 {
+                                    session.short_view_count += 1;
+                                } else if session.short_view_count > 0 {
+                                    session.short_view_count -= 1;
+                                }
+                                
+                                if session.short_view_count >= 3 {
+                                    session.category_override = Some("distracting".to_string());
+                                }
+                                
+                                session.last_title = window.title.clone();
+                                session.last_title_change = now;
+                            }
                         }
                     } else if !new_app_name.is_empty() {
                         changed = true;
                     }
                     
                     if changed {
-                        if let Some(session) = current_session {
+                        if let Some(mut session) = current_session.take() {
                             let duration = now - session.start_time;
                             if duration >= 5 {
+                                if session.is_youtube && session.category_override.is_none() && duration > 120 {
+                                    if session.app_name.ends_with("(YouTube)") {
+                                        session.category_override = Some("neutral".to_string());
+                                        session.needs_review = true;
+                                    }
+                                }
+
                                 let _ = conn.execute(
-                                    "INSERT INTO sessions (app_name, start_time, end_time) VALUES (?1, ?2, ?3)",
-                                    params![session.app_name, session.start_time, now],
+                                    "INSERT INTO sessions (app_name, start_time, end_time, window_title, category_override, needs_review) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                                    params![session.app_name, session.start_time, now, session.last_title, session.category_override, session.needs_review],
                                 );
                             }
                         }
@@ -493,9 +614,9 @@ pub fn run() {
                                 let mut auto_category = "uncategorized";
                                 let name_lower = new_app_name.to_lowercase();
                                 
-                                if name_lower.contains("(productive)") || name_lower.contains("(youtube edu)") || name_lower.contains("antigravity") || name_lower.contains("vs code") || name_lower.contains("intellij") || name_lower.contains("notion") || name_lower.contains("figma") || name_lower.contains("slack") || name_lower.contains("zoom") || name_lower.contains("teams") || name_lower.contains("cursor") || name_lower.contains("unity") || name_lower.contains("outlook") {
+                                if name_lower.contains("(productive)") || name_lower.contains("(youtube edu)") || name_lower.contains("antigravity") || name_lower.contains("vs code") || name_lower.contains("intellij") || name_lower.contains("notion") || name_lower.contains("figma") || name_lower.contains("slack") || name_lower.contains("zoom") || name_lower.contains("teams") || name_lower.contains("cursor") || name_lower.contains("unity") || name_lower.contains("outlook") || name_lower.contains("chatgpt") || name_lower.contains("claude") || name_lower.contains("gemini") || name_lower.contains("perplexity") || name_lower.contains("deepseek") || name_lower.contains("obsidian") || name_lower.contains("evernote") || name_lower.contains("onenote") || name_lower.contains("scholar") || name_lower.contains("jstor") || name_lower.contains("dergipark") || name_lower.contains("pdf") || name_lower.contains("acrobat") {
                                     auto_category = "productive";
-                                } else if name_lower.contains("(twitch)") || name_lower.contains("(youtube shorts)") || name_lower.contains("spotify") || name_lower.contains("discord") || name_lower.contains("steam") || name_lower.contains("epic") {
+                                } else if name_lower.contains("(distracting)") || name_lower.contains("(twitch)") || name_lower.contains("(youtube shorts)") || name_lower.contains("(youtube distracting)") || name_lower.contains("spotify") || name_lower.contains("discord") || name_lower.contains("steam") || name_lower.contains("epic") || name_lower.contains("instagram") || name_lower.contains("facebook") || name_lower.contains("twitter") || name_lower.contains("tiktok") || name_lower.contains("reddit") {
                                     auto_category = "distracting";
                                 } else if name_lower.contains("kairos") || name_lower.contains("screen time") || name_lower.contains("brave") || name_lower.contains("chrome") || name_lower.contains("edge") || name_lower.contains("firefox") || name_lower.contains("explorer") || name_lower.contains("gezgin") || name_lower.contains("whatsapp") || name_lower.contains("search") || name_lower.contains("shell") || name_lower.contains("terminal") || name_lower.contains("task manager") || name_lower.contains("(youtube)") {
                                     auto_category = "neutral";
@@ -512,8 +633,14 @@ pub fn run() {
                             }
 
                             current_session = Some(CurrentSession {
+                                is_youtube: new_app_name.to_lowercase().contains("youtube"),
                                 app_name: new_app_name,
                                 start_time: now,
+                                last_title: active_window.as_ref().map(|w| w.title.clone()).unwrap_or_default(),
+                                last_title_change: now,
+                                short_view_count: 0,
+                                category_override: None,
+                                needs_review: false,
                             });
                         } else {
                             current_session = None;
@@ -525,7 +652,7 @@ pub fn run() {
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, get_sessions, get_today_summary, get_all_apps, set_app_category, get_app_usage, get_daily_stats])
+        .invoke_handler(tauri::generate_handler![greet, get_sessions, get_today_summary, get_all_apps, set_app_category, get_app_usage, get_daily_stats, get_pending_reviews, resolve_review])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
