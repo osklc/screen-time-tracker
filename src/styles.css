@@ -636,20 +636,193 @@ button {
   background: var(--field-bg);
 }
 
-.app-category-item {
+.energy-dashboard {
+  display: grid;
+  gap: 18px;
+}
+
+.energy-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.energy-eyebrow {
+  margin: 0 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.energy-hero h3 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.energy-segmented {
+  display: inline-flex;
+  padding: 4px;
+  gap: 4px;
+  border: 1px solid var(--field-border);
+  border-radius: 999px;
+  background: var(--field-bg);
+}
+
+.energy-mode-btn {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 0.7rem 1rem;
+  border-radius: 999px;
+  min-width: 110px;
+  transition: all 0.2s ease;
+}
+
+.energy-mode-btn.active {
+  background: linear-gradient(135deg, var(--accent-color), var(--field-hover-border));
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.energy-metrics {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 16px;
+}
+
+.energy-meter-card,
+.energy-info-card,
+.energy-source-card,
+.energy-chart-card {
+  border: 1px solid var(--card-border);
+  border-radius: var(--s-radius);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+}
+
+.energy-meter-card {
+  padding: 24px;
+  display: grid;
+  gap: 10px;
+  align-content: center;
+  min-height: 240px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent), var(--card-bg);
+}
+
+.energy-meter-label {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+}
+
+.energy-watt-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  font-weight: 700;
+  line-height: 0.95;
+}
+
+.energy-watt-readout span:last-child {
+  font-size: 0.35em;
+  color: var(--text-muted);
+}
+
+.energy-kwh-readout {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.energy-kwh-readout span:first-child {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.energy-info-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.energy-info-card > div,
+.source-grid > div {
+  display: grid;
+  gap: 4px;
+}
+
+.energy-info-card span,
+.source-grid span {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.energy-info-card strong,
+.source-grid strong {
+  font-size: 1.05rem;
+}
+
+.energy-chart-card {
+  height: 260px;
+  padding: 14px;
+}
+
+.energy-chart-card canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.energy-source-card {
+  padding: 18px;
+}
+
+.energy-source-card h4 {
+  margin: 0 0 12px;
+}
+
+.source-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.energy-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.energy-stats {
+  border-top: 1px solid var(--field-border);
+  padding-top: 12px;
+}
+
+.energy-stats p {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px;
-  border-bottom: 1px solid var(--field-border);
+  margin: 0 0 10px;
+  gap: 10px;
 }
 
-.app-category-item:last-child {
-  border-bottom: none;
-}
+@media (max-width: 900px) {
+  .energy-metrics {
+    grid-template-columns: 1fr;
+  }
 
-.app-category-item span {
-  font-weight: 500;
+  .energy-segmented {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .energy-mode-btn {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 .app-category-item select {

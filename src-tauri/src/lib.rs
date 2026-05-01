@@ -1,10 +1,18 @@
 use active_win_pos_rs::get_active_window;
+use battery::{units::power::watt, Manager as BatteryManager};
+use nvml_wrapper::Nvml;
 use rusqlite::{params, Connection, Result as SqlResult};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use chrono::{Utc, Local, Timelike};
+use sysinfo::System;
 use tauri::{Emitter, Manager};
 use std::fs;
+
+#[cfg(target_os = "windows")]
+use wmi::{COMLibrary, WMIConnection};
 
 #[derive(Clone, Serialize)]
 struct ActiveWindowPayload {
@@ -41,6 +49,272 @@ struct CurrentSession {
     is_youtube: bool,
     category_override: Option<String>,
     needs_review: bool,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+enum PowerSmoothingMode {
+    Eco,
+    Balanced,
+    Performance,
+}
+
+impl PowerSmoothingMode {
+    fn window_seconds(self) -> u64 {
+        match self {
+            PowerSmoothingMode::Eco => 15 * 60,
+            PowerSmoothingMode::Balanced => 5 * 60,
+            PowerSmoothingMode::Performance => 60,
+        }
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            PowerSmoothingMode::Eco => "eco",
+            PowerSmoothingMode::Balanced => "balanced",
+            PowerSmoothingMode::Performance => "performance",
+        }
+    }
+}
+
+#[derive(Clone)]
+struct PowerMonitorState {
+    smoothing_mode: Arc<Mutex<PowerSmoothingMode>>,
+}
+
+#[derive(Clone)]
+struct PowerSample {
+    ts: i64,
+    watts: f64,
+}
+
+#[derive(Clone, Serialize)]
+struct PowerUsagePayload {
+    timestamp: i64,
+    avg_watts: f64,
+    instant_watts: f64,
+    sample_interval_seconds: u64,
+    averaging_window_seconds: u64,
+    sample_count: usize,
+    source: String,
+    cpu_model: String,
+    gpu_model: String,
+    smoothing_mode: String,
+}
+
+#[cfg(target_os = "windows")]
+fn detect_amd_gpu() -> Option<String> {
+    use serde::Deserialize;
+    
+    #[derive(Deserialize, Debug, Clone)]
+    #[serde(rename_all = "PascalCase")]
+    struct VideoController {
+        name: String,
+    }
+
+    // Wrap entire function in try-catch equivalent using Result chain
+    let result = (|| -> Result<Option<String>, Box<dyn std::error::Error>> {
+        let com_lib = COMLibrary::new()?;
+        let wmi_conn = WMIConnection::new(com_lib)?;
+
+        // Query all video controllers
+        let results: Vec<VideoController> = wmi_conn
+            .raw_query("SELECT Name FROM Win32_VideoController")?;
+
+        for result in results {
+            let name = result.name.trim();
+            // Check for AMD, Radeon, or ATI GPUs (exclude Microsoft, Virtual adapters)
+            if !name.is_empty() 
+                && (name.contains("AMD") || name.contains("Radeon") || name.contains("ATI"))
+                && !name.contains("Microsoft")
+                && !name.contains("Virtual")
+            {
+                return Ok(Some(name.to_string()));
+            }
+        }
+
+        Ok(None)
+    })();
+
+    result.ok().flatten()
+}
+
+#[cfg(not(target_os = "windows"))]
+fn detect_amd_gpu() -> Option<String> {
+    None
+}
+
+fn read_system_power_watts(
+    system: &mut System,
+    battery_manager: Option<&mut BatteryManager>,
+    nvml: Option<&Nvml>,
+) -> (f64, String, String, String) {
+    let cpu_model = system
+        .cpus()
+        .first()
+        .map(|cpu| cpu.brand().to_string())
+        .filter(|model| !model.trim().is_empty())
+        .unwrap_or_else(|| "Unknown CPU".to_string());
+
+    let mut gpu_model = "Unknown GPU".to_string();
+
+    if let Some(manager) = battery_manager {
+        if let Ok(batteries) = manager.batteries() {
+            let mut total_battery_watts = 0.0;
+            for battery in batteries.flatten() {
+                let battery_watts = battery.energy_rate().get::<watt>().abs();
+                if battery_watts.is_finite() {
+                    total_battery_watts += battery_watts;
+                }
+            }
+            if total_battery_watts > 0.0 {
+                return (
+                    total_battery_watts as f64,
+                    "battery-sensor".to_string(),
+                    cpu_model,
+                    gpu_model,
+                );
+            }
+        }
+    }
+
+    system.refresh_cpu_usage();
+    let cpu_usage = system.global_cpu_info().cpu_usage() as f64;
+    let estimated_cpu_watts = 4.0 + (cpu_usage.clamp(0.0, 100.0) / 100.0) * 41.0;
+
+    let mut total_watts = estimated_cpu_watts;
+    let mut source = String::from("cpu-estimated");
+
+    // Try NVIDIA GPU first
+    if let Some(nvml_api) = nvml {
+        if let Ok(device_count) = nvml_api.device_count() {
+            let mut total_gpu_watts = 0.0;
+            for idx in 0..device_count {
+                if let Ok(device) = nvml_api.device_by_index(idx) {
+                    if gpu_model == "Unknown GPU" {
+                        if let Ok(name) = device.name() {
+                            if !name.trim().is_empty() {
+                                gpu_model = name;
+                            }
+                        }
+                    }
+                    if let Ok(power_mw) = device.power_usage() {
+                        total_gpu_watts += power_mw as f64 / 1000.0;
+                    }
+                }
+            }
+
+            if total_gpu_watts > 0.0 {
+                total_watts += total_gpu_watts;
+                source.push_str("+gpu-nvml");
+            }
+        }
+    }
+
+    // Try AMD GPU if NVIDIA not found
+    if gpu_model == "Unknown GPU" {
+        if let Some(amd_gpu) = detect_amd_gpu() {
+            gpu_model = amd_gpu;
+            // AMD power estimation: assume 50-150W typical for discrete GPU
+            // Using CPU usage as proxy for AMD GPU load when power data not directly available
+            let estimated_amd_watts = 30.0 + (cpu_usage.clamp(0.0, 100.0) / 100.0) * 90.0;
+            total_watts += estimated_amd_watts;
+            if source.contains("cpu-estimated") {
+                source = "cpu-estimated+gpu-amd".to_string();
+            } else {
+                source.push_str("+gpu-amd");
+            }
+        }
+    }
+
+    (total_watts.max(0.0), source, cpu_model, gpu_model)
+}
+
+fn spawn_power_emitter(app_handle: tauri::AppHandle, power_state: PowerMonitorState) {
+    tauri::async_runtime::spawn(async move {
+        let mut system = System::new_all();
+
+        let sample_interval_seconds = 10u64;
+        let mut samples: VecDeque<PowerSample> = VecDeque::new();
+
+        loop {
+            let should_collect = app_handle
+                .get_webview_window("main")
+                .and_then(|window| window.is_visible().ok())
+                .unwrap_or(true);
+
+            if !should_collect {
+                tokio::time::sleep(Duration::from_secs(sample_interval_seconds)).await;
+                continue;
+            }
+
+            let now = Utc::now().timestamp();
+            let (watts, source, cpu_model, gpu_model) = {
+                let mut battery_manager = BatteryManager::new().ok();
+                let nvml = Nvml::init().ok();
+                read_system_power_watts(&mut system, battery_manager.as_mut(), nvml.as_ref())
+            };
+
+            samples.push_back(PowerSample { ts: now, watts });
+
+            let smoothing_mode = power_state
+                .smoothing_mode
+                .lock()
+                .map(|v| *v)
+                .unwrap_or(PowerSmoothingMode::Balanced);
+
+            let averaging_window_seconds = smoothing_mode.window_seconds();
+
+            while let Some(front) = samples.front() {
+                if now - front.ts > averaging_window_seconds as i64 {
+                    let _ = samples.pop_front();
+                } else {
+                    break;
+                }
+            }
+
+            let avg_watts = if samples.is_empty() {
+                0.0
+            } else {
+                samples.iter().map(|sample| sample.watts).sum::<f64>() / samples.len() as f64
+            };
+
+            let payload = PowerUsagePayload {
+                timestamp: now,
+                avg_watts,
+                instant_watts: watts,
+                sample_interval_seconds,
+                averaging_window_seconds,
+                sample_count: samples.len(),
+                source,
+                cpu_model,
+                gpu_model,
+                smoothing_mode: smoothing_mode.label().to_string(),
+            };
+
+            let _ = app_handle.emit("power_usage_avg", payload);
+            tokio::time::sleep(Duration::from_secs(sample_interval_seconds)).await;
+        }
+    });
+}
+
+#[tauri::command]
+fn set_power_smoothing_mode(state: tauri::State<PowerMonitorState>, mode: PowerSmoothingMode) -> Result<(), String> {
+    let mut guard = state
+        .smoothing_mode
+        .lock()
+        .map_err(|_| "Failed to lock power monitor settings".to_string())?;
+    *guard = mode;
+    Ok(())
+}
+
+#[tauri::command]
+fn get_power_smoothing_mode(state: tauri::State<PowerMonitorState>) -> Result<PowerSmoothingMode, String> {
+    let guard = state
+        .smoothing_mode
+        .lock()
+        .map_err(|_| "Failed to lock power monitor settings".to_string())?;
+    Ok(*guard)
 }
 
 fn normalize_app_name(raw_name: &str, title: &str) -> String {
@@ -548,10 +822,14 @@ fn get_audio_file(app_handle: tauri::AppHandle, filename: String) -> Result<Vec<
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .manage(PowerMonitorState {
+            smoothing_mode: Arc::new(Mutex::new(PowerSmoothingMode::Balanced)),
+        })
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, None))
         .setup(|app| {
             let app_handle = app.handle().clone();
+            let power_state = app.state::<PowerMonitorState>().inner().clone();
             
             // ── System Tray ──
             let tray_handle = app.handle().clone();
@@ -601,6 +879,9 @@ pub fn run() {
             });
             
             let conn = init_db(&app_handle).expect("Failed to initialize DB");
+
+            // Emit normalized power telemetry every 10 seconds while main window is visible.
+            spawn_power_emitter(app_handle.clone(), power_state);
             
             std::thread::spawn(move || {
                 let mut current_session: Option<CurrentSession> = None;
@@ -721,7 +1002,7 @@ pub fn run() {
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, get_sessions, get_today_summary, get_all_apps, set_app_category, get_app_usage, get_daily_stats, get_pending_reviews, resolve_review, get_setting, set_setting, get_audio_file])
+        .invoke_handler(tauri::generate_handler![greet, get_sessions, get_today_summary, get_all_apps, set_app_category, get_app_usage, get_daily_stats, get_pending_reviews, resolve_review, get_setting, set_setting, get_audio_file, set_power_smoothing_mode, get_power_smoothing_mode])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -63,4 +63,8 @@
     <path d="M19.07 4.93a10 10 0 0 1 0 14.14" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
     <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
   </symbol>
+
+  <symbol id="icon-energy" viewBox="0 0 24 24">
+    <path d="M13 2L4 13h6l-1 9 9-11h-6l1-9z" fill="currentColor" />
+  </symbol>
 </svg>

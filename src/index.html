@@ -76,6 +76,12 @@
               </svg>
               <span class="label" data-i18n="nav.dailyCharts">Daily Charts</span>
             </button>
+            <button class="nav-link" type="button" data-page="energy">
+              <svg class="icon" aria-hidden="true" focusable="false">
+                <use href="/assets/sidebar-icons.svg#icon-energy"></use>
+              </svg>
+              <span class="label" data-i18n="nav.energy">Electricity Usage</span>
+            </button>
             <button class="nav-link" type="button" data-page="focus">
               <svg class="icon" aria-hidden="true" focusable="false">
                 <use href="/assets/sidebar-icons.svg#icon-focus"></use>
@@ -155,6 +161,68 @@
             <p id="stat-distracting-time">0h 0m</p>
           </article>
         </div>
+      </section>
+
+      <section class="page" id="page-energy" aria-label="Energy usage page">
+        <article class="panel energy-dashboard">
+          <div class="energy-hero">
+            <div>
+              <p class="energy-eyebrow" data-i18n="energy.title">Electricity Usage</p>
+              <h3 data-i18n="energy.subtitle">Live system draw with automatic smoothing</h3>
+            </div>
+
+            <div class="energy-segmented" role="tablist" aria-label="Smoothing mode">
+              <button type="button" class="energy-mode-btn" data-energy-mode="eco" data-i18n="energy.modeEco">Eco</button>
+              <button type="button" class="energy-mode-btn active" data-energy-mode="balanced" data-i18n="energy.modeBalanced">Balanced</button>
+              <button type="button" class="energy-mode-btn" data-energy-mode="performance" data-i18n="energy.modePerformance">Performance</button>
+            </div>
+          </div>
+
+          <div class="energy-metrics">
+            <div class="energy-meter-card">
+              <span class="energy-meter-label" data-i18n="energy.instantPower">Instant Power</span>
+              <div class="energy-watt-readout"><span id="energy-current-w">0</span><span>W</span></div>
+              <p class="energy-kwh-readout"><span id="energy-daily-total">0.000</span> kWh <span data-i18n="energy.today">today</span></p>
+            </div>
+
+            <div class="energy-info-card">
+              <div>
+                <span data-i18n="energy.avgPower">Average Power</span>
+                <strong id="energy-avg-kW">0.000 kW</strong>
+              </div>
+              <div>
+                <span data-i18n="energy.periodUsage">Selected Window</span>
+                <strong id="energy-period-kWh">0.000 kWh</strong>
+              </div>
+              <div>
+                <span data-i18n="energy.lastUpdate">Last Update</span>
+                <strong id="energy-last-update">—</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="energy-chart-card">
+            <canvas id="energy-chart"></canvas>
+          </div>
+
+          <div class="energy-source-card">
+            <h4 data-i18n="energy.sourceTitle">Veri Kaynağı</h4>
+            <div class="source-grid">
+              <div>
+                <span data-i18n="energy.cpuModel">CPU Modeli</span>
+                <strong id="energy-cpu-model">—</strong>
+              </div>
+              <div>
+                <span data-i18n="energy.gpuModel">GPU Modeli</span>
+                <strong id="energy-gpu-model">—</strong>
+              </div>
+              <div>
+                <span data-i18n="energy.sensorSource">Sensor Source</span>
+                <strong id="energy-source">—</strong>
+              </div>
+            </div>
+          </div>
+        </article>
       </section>
 
       <section class="page" id="page-apps" aria-label="App usage page">

@@ -398,6 +398,255 @@ function getTodayKey() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+// ───── Energy Dashboard ─────
+const ENERGY_STORAGE_PREFIX = "energy-daily-kwh-";
+const ENERGY_SETTINGS_KEY = "energy-settings";
+const ENERGY_MODE_KEY = "energy-smoothing-mode";
+const DEFAULT_POWER_SAMPLE_SECONDS = 10;
+const ENERGY_MODE_WINDOWS = {
+  eco: 15 * 60,
+  balanced: 5 * 60,
+  performance: 60,
+};
+
+const energyState = {
+  mode: "balanced",
+  avgWatts: 0,
+  instantWatts: 0,
+  lastTimestamp: 0,
+  lastSource: "-",
+  cpuModel: "—",
+  gpuModel: "—",
+  initialized: false,
+  history: [],
+  chart: null,
+};
+
+function loadEnergySettings() {
+  try {
+    const raw = localStorage.getItem(ENERGY_SETTINGS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.mode && ENERGY_MODE_WINDOWS[parsed.mode]) {
+        energyState.mode = parsed.mode;
+      }
+    }
+  } catch { }
+
+  try {
+    const savedMode = localStorage.getItem(ENERGY_MODE_KEY);
+    if (savedMode && ENERGY_MODE_WINDOWS[savedMode]) {
+      energyState.mode = savedMode;
+    }
+  } catch { }
+
+  renderEnergyModeButtons();
+}
+
+function saveEnergySettings() {
+  try {
+    localStorage.setItem(ENERGY_SETTINGS_KEY, JSON.stringify({ mode: energyState.mode }));
+    localStorage.setItem(ENERGY_MODE_KEY, energyState.mode);
+  } catch { }
+}
+
+function getEnergyWindowSeconds(mode = energyState.mode) {
+  return ENERGY_MODE_WINDOWS[mode] || ENERGY_MODE_WINDOWS.balanced;
+}
+
+function renderEnergyModeButtons() {
+  document.querySelectorAll(".energy-mode-btn").forEach((button) => {
+    const mode = button.getAttribute("data-energy-mode");
+    const isActive = mode === energyState.mode;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+}
+
+function addDailyKWh(kwhAmount) {
+  try {
+    const key = ENERGY_STORAGE_PREFIX + getTodayKey();
+    const raw = localStorage.getItem(key);
+    const total = (raw ? parseFloat(raw) : 0) + kwhAmount;
+    localStorage.setItem(key, String(total));
+  } catch { }
+}
+
+function loadTodayTotalKWh() {
+  try {
+    const key = ENERGY_STORAGE_PREFIX + getTodayKey();
+    const raw = localStorage.getItem(key);
+    return raw ? parseFloat(raw) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function updateEnergyChart() {
+  const canvas = document.getElementById("energy-chart");
+  if (!canvas) return;
+
+  const labels = energyState.history.map((entry) => entry.label);
+  const values = energyState.history.map((entry) => entry.watts);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const computedStyle = getComputedStyle(document.body);
+  const lineColor = computedStyle.getPropertyValue("--accent-color").trim() || "#5a9ddf";
+  const fillColor = computedStyle.getPropertyValue("--chart-color").trim() || "rgba(90, 157, 223, 0.18)";
+
+  if (!energyState.chart) {
+    energyState.chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Average Watt",
+          data: values,
+          tension: 0.34,
+          fill: true,
+          borderColor: lineColor,
+          backgroundColor: fillColor,
+          pointRadius: 0,
+          borderWidth: 2,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (context) => `${context.parsed.y.toFixed(1)} W`,
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: { maxTicksLimit: 6 },
+            grid: { display: false },
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: (value) => `${value}W`,
+            },
+          },
+        },
+      },
+    });
+    return;
+  }
+
+  energyState.chart.data.labels = labels;
+  energyState.chart.data.datasets[0].data = values;
+  energyState.chart.update("none");
+}
+
+function updateEnergyUI() {
+  const avgKW = (energyState.avgWatts || 0) / 1000;
+  const periodKWh = avgKW * (getEnergyWindowSeconds() / 3600);
+
+  const avgEl = document.getElementById("energy-avg-kW");
+  const currentWEl = document.getElementById("energy-current-w");
+  const periodEl = document.getElementById("energy-period-kWh");
+  const dailyEl = document.getElementById("energy-daily-total");
+  const lastEl = document.getElementById("energy-last-update");
+  const sourceEl = document.getElementById("energy-source");
+  const cpuEl = document.getElementById("energy-cpu-model");
+  const gpuEl = document.getElementById("energy-gpu-model");
+
+  if (avgEl) avgEl.textContent = `${avgKW.toFixed(3)} kW`;
+  if (currentWEl) currentWEl.textContent = `${energyState.instantWatts.toFixed(0)}`;
+  if (periodEl) periodEl.textContent = `${periodKWh.toFixed(3)} kWh`;
+  if (dailyEl) dailyEl.textContent = loadTodayTotalKWh().toFixed(3);
+  if (lastEl) lastEl.textContent = energyState.lastTimestamp ? new Date(energyState.lastTimestamp * 1000).toLocaleTimeString() : "—";
+  if (sourceEl) sourceEl.textContent = energyState.lastSource;
+  if (cpuEl) cpuEl.textContent = energyState.cpuModel;
+  if (gpuEl) gpuEl.textContent = energyState.gpuModel;
+
+  renderEnergyModeButtons();
+  updateEnergyChart();
+}
+
+async function setEnergyMode(mode) {
+  if (!ENERGY_MODE_WINDOWS[mode]) return;
+
+  energyState.mode = mode;
+  saveEnergySettings();
+  renderEnergyModeButtons();
+
+  try {
+    await invoke("set_power_smoothing_mode", { mode });
+  } catch (err) {
+    console.error("Failed to set power smoothing mode:", err);
+  }
+
+  updateEnergyUI();
+}
+
+function onPowerUsagePayload(payload) {
+  if (!payload) return;
+
+  const avgWatts = Number(payload.avg_watts) || 0;
+  const instantWatts = Number(payload.instant_watts ?? payload.avg_watts) || 0;
+  const timestamp = Number(payload.timestamp) || Math.floor(Date.now() / 1000);
+  const intervalSeconds = Number(payload.sample_interval_seconds) || DEFAULT_POWER_SAMPLE_SECONDS;
+  const source = payload.source || "unknown";
+  const cpuModel = payload.cpu_model || "—";
+  const gpuModel = payload.gpu_model || "—";
+  const smoothingMode = payload.smoothing_mode;
+
+  if (smoothingMode && ENERGY_MODE_WINDOWS[smoothingMode]) {
+    energyState.mode = smoothingMode;
+  }
+
+  if (energyState.lastTimestamp <= 0 || timestamp > energyState.lastTimestamp) {
+    addDailyKWh((avgWatts * intervalSeconds) / 3600000);
+  }
+
+  energyState.avgWatts = avgWatts;
+  energyState.instantWatts = instantWatts;
+  energyState.lastTimestamp = timestamp;
+  energyState.lastSource = source;
+  energyState.cpuModel = cpuModel;
+  energyState.gpuModel = gpuModel;
+
+  energyState.history.push({
+    label: new Date(timestamp * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    watts: avgWatts,
+  });
+
+  while (energyState.history.length > 60) {
+    energyState.history.shift();
+  }
+
+  updateEnergyUI();
+}
+
+async function initEnergyUI() {
+  if (energyState.initialized) return;
+
+  loadEnergySettings();
+
+  document.querySelectorAll(".energy-mode-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      const mode = button.getAttribute("data-energy-mode");
+      if (mode) setEnergyMode(mode);
+    });
+  });
+
+  await listen("power_usage_avg", (event) => {
+    onPowerUsagePayload(event.payload);
+  });
+
+  await setEnergyMode(energyState.mode);
+  energyState.initialized = true;
+  updateEnergyUI();
+}
+
 function loadPomodoroSettings() {
   try {
     const saved = localStorage.getItem(POMO_SETTINGS_KEY);
@@ -628,6 +877,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     apps: "pages.apps",
     hourly: "pages.hourly",
     daily: "pages.daily",
+    energy: "pages.energy",
     focus: "pages.focus",
     pomodoro: "pages.pomodoro",
     goals: "pages.goals",
@@ -652,6 +902,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       fetchAndRenderSummary();
     } else if (pageId === "page-apps") {
       fetchAndRenderAppUsage();
+    } else if (pageId === "page-energy") {
+      updateEnergyUI();
     } else if (pageId === "page-settings") {
       loadAppCategories();
     } else if (pageId === "page-daily") {
@@ -709,6 +961,9 @@ window.addEventListener("DOMContentLoaded", async () => {
         fetchAndRenderAppUsage();
       } else if (pageKey === "daily") {
         fetchAndRenderDailyStats();
+      } else if (pageKey === "energy") {
+        loadEnergySettings();
+        updateEnergyUI();
       } else if (pageKey === "pomodoro") {
         loadPomodoroSettings();
         applyPomodoroSettingsToUI();
@@ -949,6 +1204,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
     }
   }
+
+  // Initialize Energy UI controls
+  initEnergyUI();
 });
 
 // ── Focus Sounds Audio Engine ──
