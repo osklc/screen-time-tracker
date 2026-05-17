@@ -182,7 +182,7 @@ Kairos is a **Tauri 2** application: a Rust backend exposed to a Vanilla JS fron
 ### Option 1 — Download the Installer (Recommended)
 
 1. Go to the [**Releases**](https://github.com/osklc/kairos/releases/latest) page.
-2. Download `Kairos_x.x.x_x64-setup.exe`.
+2. Download `Kairos_x.x.x_x64_en-US.msi`.
 3. Run the installer — Windows SmartScreen may warn you since the binary is unsigned; click **More info → Run anyway**.
 > **Note on Windows Security:** Since this is an independent open-source project and not digitally signed with a paid certificate, Windows SmartScreen may show a warning. You can proceed by clicking **More info** and **Run anyway**. The code is fully open‑source for your audit.
 4. Kairos starts tracking immediately and appears in your system tray.

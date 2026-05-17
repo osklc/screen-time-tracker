@@ -105,17 +105,25 @@ jobs:
           VERSION="${{ github.ref_name }}"
           CLEAN_VERSION=${VERSION#v}
           
-          # Extract signature from .sig file if it exists
-          SIGNATURE=""
-          if [ -f /tmp/release-assets/*_x64_en-US.msi.sig ]; then
-            SIGNATURE=$(cat /tmp/release-assets/*_x64_en-US.msi.sig)
-          else
-            echo "Warning: Signature file not found, using empty string"
+          MSI_FILE=$(find /tmp/release-assets -maxdepth 1 -type f -name '*_x64_en-US.msi' | head -n 1)
+          if [ -z "$MSI_FILE" ]; then
+            echo "Error: Windows MSI asset not found in release downloads"
+            exit 1
           fi
-          
+
+          MSI_NAME=$(basename "$MSI_FILE")
+
+          # Extract signature from .sig file if it exists
+          SIGNATURE_FILE=$(find /tmp/release-assets -maxdepth 1 -type f -name '*_x64_en-US.msi.sig' | head -n 1)
+          if [ -z "$SIGNATURE_FILE" ]; then
+            echo "Error: Signature file not found for Windows MSI asset"
+            exit 1
+          fi
+          SIGNATURE=$(tr -d '\r\n' < "$SIGNATURE_FILE")
+
           # Get download URL
-          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/$VERSION/Kairos_${CLEAN_VERSION}_x64_en-US.msi"
-          
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/$VERSION/$MSI_NAME"
+
           # Create latest.json
           cat > /tmp/latest.json <<EOF
           {
