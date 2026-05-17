@@ -1,7 +1,7 @@
 {
   "$schema": "./gen/schemas/tauri-config-v2.schema.json",
   "productName": "Kairos",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "identifier": "com.osklc.kairos",
   "build": {
     "beforeDevCommand": "npm run dev-server",
@@ -35,6 +35,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "resources": [
       "assets/sounds/*"
     ],
