@@ -1,10 +1,11 @@
 {
   "name": "kairos",
   "private": true,
-  "version": "1.4.4",
+  "version": "1.4.5",
   "type": "module",
   "scripts": {
     "tauri": "tauri",
+    "build": "npm run build-js",
     "build-js": "esbuild src/main.js --bundle --outfile=src/bundle.js --platform=browser --format=esm --minify",
     "dev-server": "npm run build-js && serve src -l 1420"
   },

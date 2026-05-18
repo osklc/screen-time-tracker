@@ -1,10 +1,11 @@
 {
   "$schema": "./gen/schemas/tauri-config-v2.schema.json",
   "productName": "Kairos",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "identifier": "com.osklc.kairos",
   "build": {
     "beforeDevCommand": "npm run dev-server",
+    "beforeBuildCommand": "npm run build",
     "devUrl": "http://localhost:1420",
     "frontendDist": "../src"
   },
