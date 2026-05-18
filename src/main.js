@@ -34,16 +34,16 @@ async function initSentry() {
               }
             });
           }
-        } catch (e) {}
+        } catch (e) { }
         return event;
       }
     });
 
     window.addEventListener('error', ev => {
-      try { Sentry.captureException(ev.error || ev.message); } catch (e) {}
+      try { Sentry.captureException(ev.error || ev.message); } catch (e) { }
     });
     window.addEventListener('unhandledrejection', ev => {
-      try { Sentry.captureException(ev.reason); } catch (e) {}
+      try { Sentry.captureException(ev.reason); } catch (e) { }
     });
   } catch (e) {
     console.error('Sentry init failed', e);
@@ -236,7 +236,7 @@ async function fetchAndRenderSummary() {
 function updateMementoMoriWidget() {
   const timeEl = document.getElementById("memento-mori-time");
   const barEl = document.getElementById("memento-mori-bar");
-  
+
   if (!timeEl || !barEl) return;
 
   const now = new Date();
@@ -259,7 +259,7 @@ function updateMementoMoriWidget() {
 
 function initMementoMoriWidget() {
   updateMementoMoriWidget();
-  
+
   // Update every second
   setInterval(updateMementoMoriWidget, 1000);
 }
@@ -1427,14 +1427,14 @@ window.addEventListener("DOMContentLoaded", async () => {
     todos.forEach((todo, index) => {
       const li = document.createElement("li");
       li.className = "todo-item" + (todo.completed ? " completed" : "");
-      
+
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.checked = todo.completed;
       checkbox.addEventListener("change", () => {
         todos[index].completed = checkbox.checked;
         if (checkbox.checked) {
-          const audio = new Audio("assets/sound-effect/mixkit-quick-win-video-game-notification-269.wav");
+          const audio = new Audio("assets/sound-effect/to-do-check.wav");
           audio.volume = 0.5;
           audio.play().catch(e => console.error("Sound play failed:", e));
         }
@@ -2005,7 +2005,7 @@ document.querySelectorAll(".chart-period-btn").forEach(btn => {
     const target = e.target;
     target.classList.add("active");
     target.setAttribute("aria-pressed", "true");
-    
+
     // Update period and fetch
     currentChartPeriod = target.getAttribute("data-chart-period") || "daily";
     fetchAndRenderDailyStats();
