@@ -147,6 +147,7 @@
       "update.invalidManifest": "Update metadata is invalid on the server.",
       "update.installing": "Installing...",
       "update.failed": "Update failed.",
+      "update.downloadManually": "Download Manually",
       "chart.noData": "Loading data or not enough data to display..."
     },
     "tr": {
@@ -295,6 +296,7 @@
       "update.invalidManifest": "Sunucudaki güncelleme metadatası geçersiz.",
       "update.installing": "Yükleniyor...",
       "update.failed": "Güncelleme başarısız.",
+      "update.downloadManually": "Manuel İndir",
       "chart.noData": "Veriler yükleniyor veya gösterilecek yeterli veri yok..."
     }
   }

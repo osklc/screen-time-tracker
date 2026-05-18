@@ -135,7 +135,12 @@ function setUpdateStatus(message, isError = false) {
   const statusEl = document.getElementById("update-status");
   if (!statusEl) return;
 
-  statusEl.textContent = message;
+  if (isError) {
+    const linkText = translate("update.downloadManually") || "Download Manually";
+    statusEl.innerHTML = `${message} <a href="https://github.com/osklc/kairos/releases/latest" target="_blank" style="color: var(--accent-color); text-decoration: underline; margin-left: 6px; font-weight: 600;">${linkText}</a>`;
+  } else {
+    statusEl.textContent = message;
+  }
   statusEl.style.display = message ? "block" : "none";
   statusEl.dataset.state = isError ? "error" : "info";
 }
@@ -1068,31 +1073,91 @@ function savePomodoroStats(stats) {
   localStorage.setItem(POMO_STATS_KEY, JSON.stringify(stats));
 }
 
-function playNotificationSound() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value = 800;
-    osc.type = "sine";
-    gain.gain.value = 0.3;
-    osc.start();
-    osc.stop(ctx.currentTime + 0.5);
-    setTimeout(() => {
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.frequency.value = 1000;
-      osc2.type = "sine";
-      gain2.gain.value = 0.3;
-      osc2.start();
-      osc2.stop(ctx.currentTime + 0.5);
-    }, 300);
-  } catch { /* audio not available */ }
-}
+// ── Pomodoro Sound System (Web Audio API — Zero-Latency Preload) ──
+const pomoSounds = (() => {
+  // Shared AudioContext for all Pomodoro sounds
+  let _ctx = null;
+
+  function getCtx() {
+    if (!_ctx) {
+      _ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return _ctx;
+  }
+
+  function resumeCtx() {
+    const ctx = getCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+
+  function createSound(filePath, volume = 0.6) {
+    const sound = {
+      buffer: null,
+      volume,
+
+      async preload() {
+        try {
+          const ctx = getCtx();
+          const response = await fetch(filePath);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const arrayBuffer = await response.arrayBuffer();
+          ctx.decodeAudioData(
+            arrayBuffer,
+            (decoded) => { this.buffer = decoded; },
+            (err) => { console.warn(`[pomoSounds] decode failed for ${filePath}:`, err); }
+          );
+        } catch (e) {
+          console.warn(`[pomoSounds] preload failed for ${filePath}:`, e);
+        }
+      },
+
+      play() {
+        try {
+          const ctx = resumeCtx();
+
+          if (!this.buffer) {
+            // Fallback to HTML5 Audio if buffer not ready yet
+            const fallback = new Audio(filePath);
+            fallback.volume = this.volume;
+            fallback.play().catch(err => console.warn(`[pomoSounds] fallback play failed:`, err));
+            return;
+          }
+
+          const source = ctx.createBufferSource();
+          source.buffer = this.buffer;
+
+          const gainNode = ctx.createGain();
+          gainNode.gain.setValueAtTime(this.volume, ctx.currentTime);
+
+          source.connect(gainNode);
+          gainNode.connect(ctx.destination);
+          source.start(0);
+        } catch (e) {
+          console.warn(`[pomoSounds] play failed for ${filePath}:`, e);
+        }
+      }
+    };
+    return sound;
+  }
+
+  const sounds = {
+    start:             createSound('assets/sound-effect/start.wav',              0.65),
+    pauseReset:        createSound('assets/sound-effect/pause-reset.wav',        0.55),
+    focusEnd:          createSound('assets/sound-effect/focus-end.wav',          0.70),
+    breakEnd:          createSound('assets/sound-effect/break-end.wav',          0.70),
+    dailyGoalAchieved: createSound('assets/sound-effect/daily-goal-achieved.wav', 0.75),
+  };
+
+  async function preloadAll() {
+    await Promise.allSettled(Object.values(sounds).map(s => s.preload()));
+  }
+
+  return { preloadAll, ...sounds };
+})();
+
+// Begin preloading all Pomodoro sounds immediately (non-blocking)
+pomoSounds.preloadAll();
 
 function updatePomodoroUI() {
   const timeEl = document.getElementById("pomo-time");
@@ -1182,6 +1247,9 @@ function startPomodoro() {
   pomodoroState.isRunning = true;
   pomodoroState.isPaused = false;
 
+  // Play start sound (covers both fresh-start and resume-from-pause)
+  pomoSounds.start.play();
+
   pomodoroState.intervalId = setInterval(() => {
     pomodoroState.timeRemaining--;
 
@@ -1191,7 +1259,6 @@ function startPomodoro() {
       pomodoroState.isRunning = false;
       pomodoroState.isPaused = false;
 
-      playNotificationSound();
       onPomodoroComplete();
     }
 
@@ -1206,6 +1273,7 @@ function pausePomodoro() {
   pomodoroState.isPaused = true;
   clearInterval(pomodoroState.intervalId);
   pomodoroState.intervalId = null;
+  pomoSounds.pauseReset.play();
   updatePomodoroUI();
 }
 
@@ -1217,6 +1285,7 @@ function resetPomodoro() {
   pomodoroState.mode = "focus";
   pomodoroState.totalDuration = pomodoroState.settings.focusDuration * 60;
   pomodoroState.timeRemaining = pomodoroState.totalDuration;
+  pomoSounds.pauseReset.play();
   updatePomodoroUI();
 }
 
@@ -1228,11 +1297,18 @@ function onPomodoroComplete() {
     stats.totalFocusSeconds += pomodoroState.totalDuration;
     savePomodoroStats(stats);
 
-    // Decide next break type
-    if (stats.sessionsCompleted % pomodoroState.settings.longBreakAfter === 0) {
+    // Check if daily goal achieved (multiples of longBreakAfter)
+    const isDailyGoal = stats.sessionsCompleted > 0 &&
+      stats.sessionsCompleted % pomodoroState.settings.longBreakAfter === 0;
+
+    if (isDailyGoal) {
+      // Daily goal milestone: play special achievement sound
+      pomoSounds.dailyGoalAchieved.play();
       pomodoroState.mode = "longBreak";
       pomodoroState.totalDuration = pomodoroState.settings.longBreakDuration * 60;
     } else {
+      // Regular focus session end
+      pomoSounds.focusEnd.play();
       pomodoroState.mode = "shortBreak";
       pomodoroState.totalDuration = pomodoroState.settings.shortBreakDuration * 60;
     }
@@ -1242,6 +1318,8 @@ function onPomodoroComplete() {
     savePomodoroStats(stats);
     pomodoroState.mode = "focus";
     pomodoroState.totalDuration = pomodoroState.settings.focusDuration * 60;
+    // Break ended — signal user to return to focus
+    pomoSounds.breakEnd.play();
   }
 
   pomodoroState.timeRemaining = pomodoroState.totalDuration;
@@ -1411,6 +1489,75 @@ window.addEventListener("DOMContentLoaded", async () => {
   const todoInput = document.getElementById("todo-input");
   const todoList = document.getElementById("todo-list");
 
+  // ── Web Audio API Preload & Playback System (Guarantees True 0ms Latency) ──
+  const todoCheckSound = {
+    ctx: null,
+    buffer: null,
+    
+    init() {
+      if (!this.ctx) {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    },
+
+    async preload() {
+      try {
+        this.init();
+        const response = await fetch("assets/sound-effect/to-do-check.wav");
+        const arrayBuffer = await response.arrayBuffer();
+        // Decode the binary array buffer into raw uncompressed PCM audio data in RAM
+        this.ctx.decodeAudioData(
+          arrayBuffer,
+          (decodedBuffer) => {
+            this.buffer = decodedBuffer;
+          },
+          (err) => {
+            console.error("Error decoding todo audio data:", err);
+          }
+        );
+      } catch (e) {
+        console.error("Failed to preload todo check sound:", e);
+      }
+    },
+
+    play() {
+      try {
+        this.init();
+        if (this.ctx.state === "suspended") {
+          this.ctx.resume();
+        }
+
+        // Fallback: If Web Audio API buffer isn't loaded/decoded yet, play via HTML5 Audio
+        if (!this.buffer) {
+          const fallback = new Audio("assets/sound-effect/to-do-check.wav");
+          fallback.volume = 0.5;
+          fallback.play().catch(e => console.error("Fallback play failed:", e));
+          return;
+        }
+
+        // Create buffer source node
+        const source = this.ctx.createBufferSource();
+        source.buffer = this.buffer;
+
+        // Create gain node for volume control
+        const gainNode = this.ctx.createGain();
+        gainNode.gain.setValueAtTime(0.5, this.ctx.currentTime);
+
+        // Connect nodes: Source -> Gain -> Speakers
+        source.connect(gainNode);
+        gainNode.connect(this.ctx.destination);
+
+        // Play instantly (0ms delay)
+        source.start(0);
+      } catch (e) {
+        console.error("Web Audio API play failed:", e);
+      }
+    }
+  };
+
+  // Start preloading the audio file immediately in the background
+  todoCheckSound.preload();
+
   let todos = [];
   try {
     const savedTodos = localStorage.getItem("todos");
@@ -1434,9 +1581,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       checkbox.addEventListener("change", () => {
         todos[index].completed = checkbox.checked;
         if (checkbox.checked) {
-          const audio = new Audio("assets/sound-effect/to-do-check.wav");
-          audio.volume = 0.5;
-          audio.play().catch(e => console.error("Sound play failed:", e));
+          todoCheckSound.play();
         }
         saveTodos();
         renderTodos();
@@ -1919,15 +2064,24 @@ async function showUpdateModal(newVersion) {
   const versionSpan = document.getElementById("update-version");
   const installButton = document.getElementById("update-btn-install");
   const skipButton = document.getElementById("update-btn-skip");
+  const errorDiv = document.getElementById("update-modal-error");
 
   if (!modal || !versionSpan || !installButton || !skipButton) return;
 
   versionSpan.textContent = `v${newVersion}`;
+  if (errorDiv) {
+    errorDiv.style.display = "none";
+    errorDiv.innerHTML = "";
+  }
   modal.style.display = "flex";
 
   installButton.onclick = async () => {
     installButton.textContent = translate("update.installing") || "Installing...";
     installButton.disabled = true;
+    if (errorDiv) {
+      errorDiv.style.display = "none";
+      errorDiv.innerHTML = "";
+    }
     try {
       await invoke("install_update");
       // If we get here without error, installation succeeded and app will restart
@@ -1938,6 +2092,12 @@ async function showUpdateModal(newVersion) {
       installButton.disabled = false;
       // Show detailed error in console for debugging
       setUpdateStatus(`Update failed: ${errorMessage}`, true);
+
+      if (errorDiv) {
+        const linkText = translate("update.downloadManually") || "Download Manually";
+        errorDiv.innerHTML = `${translate("update.failed") || "Update failed."} <a href="https://github.com/osklc/kairos/releases/latest" target="_blank" style="color: var(--accent-color); text-decoration: underline; font-weight: 600; margin-left: 4px;">${linkText}</a>`;
+        errorDiv.style.display = "block";
+      }
     }
   };
 
