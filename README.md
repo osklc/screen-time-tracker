@@ -9,12 +9,12 @@
 **Know where your time goes. Take it back.**
 
 ![GitHub Release](https://img.shields.io/github/v/release/osklc/kairos?include_prereleases&style=flat-square&color=blue)
-[![Platform](https://img.shields.io/badge/platform-Windows-0078D4?style=flat-square&logo=windows)](https://github.com/osklc/kairos/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D4?style=flat-square)](https://github.com/osklc/kairos/releases)
 [![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-FFC131?style=flat-square&logo=tauri)](https://tauri.app)
 [![Rust](https://img.shields.io/badge/backend-Rust-CE422B?style=flat-square&logo=rust)](https://www.rust-lang.org)
 [![License: GPL v3](https://img.shields.io/badge/license-GPL%20v3-green?style=flat-square)](LICENSE)
 
-[⬇ Download for Windows](https://github.com/osklc/kairos/releases/latest)&nbsp;&nbsp;·&nbsp;&nbsp;[Releases](https://github.com/osklc/kairos/releases)&nbsp;&nbsp;·&nbsp;&nbsp;[Report Bug](https://github.com/osklc/kairos/issues)
+[⬇ Download: Windows | macOS | Ubuntu](https://github.com/osklc/kairos/releases/latest)&nbsp;&nbsp;·&nbsp;&nbsp;[Releases](https://github.com/osklc/kairos/releases)&nbsp;&nbsp;·&nbsp;&nbsp;[Report Bug](https://github.com/osklc/kairos/issues)
 
 </div>
 
@@ -48,7 +48,7 @@
 
 ## What is Kairos?
 
-Kairos is a **lightweight, privacy-first screen time tracker** for Windows that runs silently in your system tray and tells you exactly where your attention went throughout the day — broken down by app, website, and category.
+Kairos is a **lightweight, privacy-first screen time tracker** for Windows, macOS, and Linux that runs silently in your system tray and tells you exactly where your attention went throughout the day — broken down by app, website, and category.
 
 Unlike cloud-based alternatives, **all data stays on your machine** in a local SQLite database. There are no subscriptions, no accounts, and no telemetry. Kairos also goes beyond simple time tracking by integrating a **Pomodoro timer**, **ambient focus sounds**, a **to-do list**, and a **live electricity usage monitor** so you can see the environmental and financial cost of your screen time.
 
@@ -181,13 +181,36 @@ Kairos is a **Tauri 2** application: a Rust backend exposed to a Vanilla JS fron
 
 ### Option 1 — Download the Installer (Recommended)
 
-1. Go to the [**Releases**](https://github.com/osklc/kairos/releases/latest) page.
-2. Download `Kairos_x.x.x_x64_en-US.msi`.
-3. Run the installer — Windows SmartScreen may warn you since the binary is unsigned; click **More info → Run anyway**.
-> **Note on Windows Security:** Since this is an independent open-source project and not digitally signed with a paid certificate, Windows SmartScreen may show a warning. You can proceed by clicking **More info** and **Run anyway**. The code is fully open‑source for your audit.
-4. Kairos starts tracking immediately and appears in your system tray.
+Go to the [**Releases**](https://github.com/osklc/kairos/releases/latest) page and download the installer for your platform:
 
-> [**⬇ Download for Windows**](https://github.com/osklc/kairos/releases/latest)
+#### 🪟 Windows
+1. Download `Kairos_x.x.x_x64_en-US.msi` (or the `.exe` setup).
+2. Run the installer.
+> **Note on Windows Security:** Since this is an independent open-source project and not digitally signed with a paid certificate, Windows SmartScreen may show a warning. You can proceed by clicking **More info** and **Run anyway**. The code is fully open‑source for your audit.
+3. Kairos starts tracking immediately and appears in your system tray.
+
+#### 🍎 macOS
+1. Download `Kairos_x.x.x_aarch64.dmg` (for Apple Silicon / M1/M2/M3) or `Kairos_x.x.x_x64.dmg` (for Intel).
+2. Open the `.dmg` file and drag **Kairos** to your **Applications** folder.
+3. On first launch, right-click (or Control-click) **Kairos** and select **Open** to bypass the macOS "unidentified developer" warning.
+
+#### 🐧 Ubuntu / Linux
+* **DEB Package (Recommended):**
+  1. Download `kairos_x.x.x_amd64.deb`.
+  2. Install it using your package manager or terminal:
+     ```bash
+     sudo dpkg -i kairos_*.deb
+     # Or: sudo apt install ./kairos_*.deb
+     ```
+* **AppImage:**
+  1. Download `Kairos_x.x.x_amd64.AppImage`.
+  2. Make it executable and run:
+     ```bash
+     chmod +x Kairos_*.AppImage
+     ./Kairos_*.AppImage
+     ```
+
+> [**⬇ Download: Windows | macOS | Ubuntu**](https://github.com/osklc/kairos/releases/latest)
 
 ---
 

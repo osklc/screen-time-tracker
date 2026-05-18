@@ -9,12 +9,12 @@
 **Zamanınızın nereye gittiğini bilin. Kontrolü geri kazanın.**
 
 ![GitHub Release](https://img.shields.io/github/v/release/osklc/kairos?include_prereleases&style=flat-square&color=blue)
-[![Platform](https://img.shields.io/badge/platform-Windows-0078D4?style=flat-square&logo=windows)](https://github.com/osklc/kairos/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D4?style=flat-square)](https://github.com/osklc/kairos/releases)
 [![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-FFC131?style=flat-square&logo=tauri)](https://tauri.app)
 [![Rust](https://img.shields.io/badge/backend-Rust-CE422B?style=flat-square&logo=rust)](https://www.rust-lang.org)
 [![License: GPL v3](https://img.shields.io/badge/license-GPL%20v3-green?style=flat-square)](LICENSE)
 
-[**⬇ Windows için İndir**](https://github.com/osklc/kairos/releases/latest)&nbsp;&nbsp;·&nbsp;&nbsp;[Releases](https://github.com/osklc/kairos/releases)&nbsp;&nbsp;·&nbsp;&nbsp;[Report Bug](https://github.com/osklc/kairos/issues)
+[**⬇ İndir: Windows | macOS | Ubuntu**](https://github.com/osklc/kairos/releases/latest)&nbsp;&nbsp;·&nbsp;&nbsp;[Releases](https://github.com/osklc/kairos/releases)&nbsp;&nbsp;·&nbsp;&nbsp;[Report Bug](https://github.com/osklc/kairos/issues)
 
 ---
 
@@ -48,7 +48,7 @@
 
 ## Kairos Nedir?
 
-Kairos, **hafif, gizlilik odaklı bir ekran süresi izleyicisidir** Windows için ve sistem tepsisinde sessizce çalışır. Gün içinde hangi uygulamalara, web sitelerine ve kategorilere ne kadar zaman harcadığınızı gösterir.
+Kairos, Windows, macOS ve Linux için sistem tepsisinde sessizce çalışan **hafif, gizlilik odaklı bir ekran süresi izleyicisidir**. Gün içinde hangi uygulamalara, web sitelerine ve kategorilere ne kadar zaman harcadığınızı gösterir.
 
 Bulut tabanlı rakiplerin aksine, **tüm veriler yerel SQLite veritabanında kalır**. Abonelik, hesap ya da telemetri yoktur. Kairos ayrıca **Pomodoro zamanlayıcı**, **odak sesleri**, **yapılacaklar listesi** ve **canlı enerji tüketim monitörü** ile ekran süresi bilgilerinin çevresel ve finansal etkisini de gösterir.
 
@@ -178,13 +178,36 @@ Kairos bir **Tauri 2** uygulamasıdır: Rust backend'i vanilla JS frontend'e sı
 
 ### Seçenek 1 — Kurulumcuyu İndir (Önerilen)
 
-1. [**Releases**](https://github.com/osklc/kairos/releases/latest) sayfasına gidin.
-2. `Kairos_x.x.x_x64-setup.exe` dosyasını indirin.
-3. Kurucuyu çalıştırın — Windows SmartScreen, imzasız olduğundan uyarabilir; **Daha fazla bilgi → Yine de çalıştır** tıklayın.
-> **Windows Güvenliği Notu:** Bu bağımsız açık kaynak proje, ücretli bir sertifika ile dijital olarak imzalanmamıştır; bu nedenle Windows SmartScreen bir uyarı gösterebilir. **Daha fazla bilgi** ve **Yine de çalıştır** seçerek devam edebilirsiniz. Kod tamamen açık kaynaktır ve denetlemeniz mümkündür.
-4. Kairos anında izlemeye başlar ve sistem tepsinizde görünür.
+[**Releases**](https://github.com/osklc/kairos/releases/latest) sayfasına gidin ve platformunuza uygun kurulumcuyu indirin:
 
-> [**⬇ Windows için İndir**](https://github.com/osklc/kairos/releases/latest)
+#### 🪟 Windows
+1. `Kairos_x.x.x_x64_en-US.msi` (veya `.exe` kurulumcusunu) indirin.
+2. Kurucuyu çalıştırın.
+> **Windows Güvenliği Notu:** Bu bağımsız açık kaynak proje, ücretli bir sertifika ile dijital olarak imzalanmamıştır; bu nedenle Windows SmartScreen bir uyarı gösterebilir. **Daha fazla bilgi** ve **Yine de çalıştır** seçerek devam edebilirsiniz. Kod tamamen açık kaynaktır ve denetlemeniz mümkündür.
+3. Kairos anında izlemeye başlar ve sistem tepsinizde görünür.
+
+#### 🍎 macOS
+1. `Kairos_x.x.x_aarch64.dmg` (Apple Silicon / M1/M2/M3 için) veya `Kairos_x.x.x_x64.dmg` (Intel için) dosyasını indirin.
+2. `.dmg` dosyasını açın ve **Kairos** uygulamasını **Uygulamalar** (Applications) klasörünüze sürükleyin.
+3. İlk açılışta macOS "tanımlanamayan geliştirici" uyarısını geçmek için uygulamaya sağ tıklayıp (veya Control tuşuna basarak) **Aç** (Open) seçeneğini seçin.
+
+#### 🐧 Ubuntu / Linux
+* **DEB Paketi (Önerilen):**
+  1. `kairos_x.x.x_amd64.deb` dosyasını indirin.
+  2. Paket yöneticinizle veya terminal üzerinden yükleyin:
+     ```bash
+     sudo dpkg -i kairos_*.deb
+     # Veya: sudo apt install ./kairos_*.deb
+     ```
+* **AppImage:**
+  1. `Kairos_x.x.x_amd64.AppImage` dosyasını indirin.
+  2. Çalıştırılabilir yapın ve başlatın:
+     ```bash
+     chmod +x Kairos_*.AppImage
+     ./Kairos_*.AppImage
+     ```
+
+> [**⬇ İndir: Windows | macOS | Ubuntu**](https://github.com/osklc/kairos/releases/latest)
 
 ---
 
