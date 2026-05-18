@@ -1,11 +1,11 @@
 {
-  "version": "1.4.3",
-  "notes": "See https://github.com/osklc/kairos/releases/tag/v1.4.3 for release notes",
-  "pub_date": "2026-05-17T15:15:05Z",
+  "version": "1.4.6",
+  "notes": "See https://github.com/osklc/kairos/releases/tag/v1.4.6 for release notes",
+  "pub_date": "2026-05-18T13:12:38Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "",
-      "url": "https://github.com/osklc/kairos/releases/download/v1.4.3/Kairos_1.4.3_x64_en-US.msi"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRd2lxRUxUb0JleTEzMVEwNHpXYlZreEZWNjRiWTluMGFBdk9RaVZWZE9va21pNmc0NCtCVE00YXJha1BiSUl1bTJ6R1kwa2pyNTF0REwxMFpBS1h0ZlhNRGtzdWRneEFzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5MTA5Nzk4CWZpbGU6S2Fpcm9zXzEuNC42X3g2NF9lbi1VUy5tc2kKaUg0L25PZkE3Snhrd2NhaEVxWmVhUGRPa2RvVVBrSFQ4RlRGcStzdG5xU3NMRGFRQVF3d09NeUVVWVpieHh6Zm16NGdHWm8xNS9taTdQaDNYMVExRHc9PQo=",
+      "url": "https://github.com/osklc/kairos/releases/download/v1.4.6/Kairos_1.4.6_x64_en-US.msi"
     }
   }
 }
