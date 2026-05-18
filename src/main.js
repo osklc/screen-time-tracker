@@ -130,6 +130,16 @@ let globalAnalyser = null;
 let globalAudioCtx = null;
 let visualizerAnimationId = null;
 let updateCheckInProgress = false;
+const FORCE_UPDATE_FAILURE_KEY = "kairos-debug-force-update-failure";
+
+function shouldForceUpdateFailure() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return localStorage.getItem(FORCE_UPDATE_FAILURE_KEY) === "true" || params.get("forceUpdateFailure") === "1";
+  } catch {
+    return false;
+  }
+}
 
 function setUpdateStatus(message, isError = false) {
   const statusEl = document.getElementById("update-status");
@@ -1795,7 +1805,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   const autostartToggle = document.getElementById("autostart-toggle");
   if (autostartToggle) {
     try {
-      const autostartApi = window.__TAURI__?.plugins?.autostart;
+      const autostartApi = window.__TAURI__?.autostart ?? window.__TAURI__?.plugins?.autostart;
       if (!autostartApi) {
         throw new Error("Autostart plugin API unavailable");
       }
@@ -2094,14 +2104,14 @@ async function showUpdateModal(newVersion) {
     } catch (e) {
       const errorMessage = String(e);
       console.error("Update installation failed:", errorMessage);
-      installButton.textContent = "Failed - " + errorMessage.substring(0, 30);
+      installButton.textContent = "Failed";
       installButton.disabled = false;
       // Show detailed error in console for debugging
       setUpdateStatus(`Update failed: ${errorMessage}`, true);
 
       if (errorDiv) {
         const linkText = translate("update.downloadManually") || "Download Manually";
-        errorDiv.innerHTML = `${translate("update.failed") || "Update failed."} <a href="https://github.com/osklc/kairos/releases/latest" target="_blank" style="color: var(--accent-color); text-decoration: underline; font-weight: 600; margin-left: 4px;">${linkText}</a>`;
+        errorDiv.innerHTML = `${translate("update.failed") || "Update failed."}<br><span style="display:block; margin-top:6px; word-break: break-word; overflow-wrap: anywhere; color: var(--text-muted);">${errorMessage}</span><a href="https://github.com/osklc/kairos/releases/latest" target="_blank" style="display:inline-block; margin-top:8px; color: var(--accent-color); text-decoration: underline; font-weight: 600;">${linkText}</a>`;
         errorDiv.style.display = "block";
       }
       // Open latest release in the user's browser so they can download the release directly
@@ -2125,6 +2135,9 @@ async function checkForUpdates() {
   setUpdateStatus(translate("update.checking") || "Checking for updates...");
 
   try {
+    if (shouldForceUpdateFailure()) {
+      throw new Error("Debug: forced updater failure for testing");
+    }
     const newVersion = await invoke("check_update");
     if (newVersion) {
       setUpdateStatus("");
