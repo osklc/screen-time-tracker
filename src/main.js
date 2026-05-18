@@ -138,6 +138,12 @@ function setUpdateStatus(message, isError = false) {
   if (isError) {
     const linkText = translate("update.downloadManually") || "Download Manually";
     statusEl.innerHTML = `${message} <a href="https://github.com/osklc/kairos/releases/latest" target="_blank" style="color: var(--accent-color); text-decoration: underline; margin-left: 6px; font-weight: 600;">${linkText}</a>`;
+    // Attempt to open the latest release page automatically so the user can download manually
+    try {
+      window.open("https://github.com/osklc/kairos/releases/latest", "_blank");
+    } catch (openErr) {
+      console.warn("Could not open latest release URL automatically:", openErr);
+    }
   } else {
     statusEl.textContent = message;
   }
@@ -2098,6 +2104,13 @@ async function showUpdateModal(newVersion) {
         errorDiv.innerHTML = `${translate("update.failed") || "Update failed."} <a href="https://github.com/osklc/kairos/releases/latest" target="_blank" style="color: var(--accent-color); text-decoration: underline; font-weight: 600; margin-left: 4px;">${linkText}</a>`;
         errorDiv.style.display = "block";
       }
+      // Open latest release in the user's browser so they can download the release directly
+      try {
+        window.open("https://github.com/osklc/kairos/releases/latest", "_blank");
+      } catch (openErr) {
+        console.warn("Could not open latest release URL automatically:", openErr);
+      }
+      
     }
   };
 
