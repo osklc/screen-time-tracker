@@ -346,7 +346,7 @@ body {
 }
 
 .sidebar {
-  width: 340px;
+  width: 300px;
   background: var(--sidebar-bg);
   color: var(--sidebar-text);
   padding: 18px 14px;
