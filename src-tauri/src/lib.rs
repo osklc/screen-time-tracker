@@ -10,6 +10,7 @@ use chrono::{Utc, Local, Timelike};
 use sysinfo::System;
 use tauri::{Emitter, Manager};
 use tauri_plugin_autostart::ManagerExt;
+use tauri_plugin_notification::NotificationExt;
 use std::fs;
 use std::env;
 use regex::Regex;
@@ -638,6 +639,17 @@ fn get_power_smoothing_mode(state: tauri::State<PowerMonitorState>) -> Result<Po
         .lock()
         .map_err(|_| "Failed to lock power monitor settings".to_string())?;
     Ok(*guard)
+}
+
+#[tauri::command]
+fn show_stoic_notification(app_handle: tauri::AppHandle, title: String, body: String) -> Result<(), String> {
+    app_handle
+        .notification()
+        .builder()
+        .title(title)
+        .body(body)
+        .show()
+        .map_err(|error| error.to_string())
 }
 
 fn normalize_app_name(raw_name: &str, title: &str) -> String {
@@ -1400,6 +1412,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, None))
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let app_handle = app.handle().clone();
@@ -1626,7 +1639,7 @@ pub fn run() {
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, get_sessions, get_today_summary, get_all_apps, set_app_category, get_app_usage, get_daily_stats, get_weekly_stats, get_monthly_stats, get_pending_reviews, resolve_review, get_setting, set_setting, get_audio_file, set_power_smoothing_mode, get_power_smoothing_mode, check_update, install_update, export_data, get_sentry_dsn, send_manual_bug_report])
+        .invoke_handler(tauri::generate_handler![greet, get_sessions, get_today_summary, get_all_apps, set_app_category, get_app_usage, get_daily_stats, get_weekly_stats, get_monthly_stats, get_pending_reviews, resolve_review, get_setting, set_setting, get_audio_file, set_power_smoothing_mode, get_power_smoothing_mode, show_stoic_notification, check_update, install_update, export_data, get_sentry_dsn, send_manual_bug_report])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
