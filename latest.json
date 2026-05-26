@@ -1,11 +1,11 @@
 {
-  "version": "1.5.0",
-  "notes": "See https://github.com/osklc/kairos/releases/tag/v1.5.0 for release notes",
-  "pub_date": "2026-05-19T16:20:57Z",
+  "version": "1.5.1",
+  "notes": "See https://github.com/osklc/kairos/releases/tag/v1.5.1 for release notes",
+  "pub_date": "2026-05-26T21:50:04Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVROGdwQ3ljRzMxL0lUbElRY0JGdmxLUzVPQ1M0WFR1dUxjTFJwOG9vYm1XcjBkSmxIQ1JNeThlQ1RTUVBXcUNEVTFWWXdueVNtbm16QjV3emFZMjlFeEV2WGhWTFhhdndVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5MjA3NTkwCWZpbGU6S2Fpcm9zXzEuNS4wX3g2NF9lbi1VUy5tc2kKUzNweW8yTWlhNWtCdE0vWjdEaTE5YXFuSDNEelBmQk9hMFFZT2JpekJlTkhkdHVjelFiVDNsL29PWXZWWDRtQnNFeGpmbDJNZk1aNDZLUkpOZ0I2RHc9PQo=",
-      "url": "https://github.com/osklc/kairos/releases/download/v1.5.0/Kairos_1.5.0_x64_en-US.msi"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVROGdwQ3ljRzMxL0VPUTB3ZFFOWDlocng1UUUwSmpNTG5xem5sbFQrem04aU1BeldiQzNoajdOeG1RMlh6TVR2T0t6WnQ1d2hnR1lOSkVMZFVUemN4REVrR0pyYk1NOGdnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5ODMyMTIxCWZpbGU6S2Fpcm9zXzEuNS4wX3g2NF9lbi1VUy5tc2kKd1I3LzNlcUZMQ04yZXR0Z0o0eldZSzhMaEpPTmlHY2dEMVRCNnZwWDhjU2hHZ1BVK1hEWis4Nlp3MVFYU0s2ckFHMjl2WFRqdEQvMTFyRWhXdDlURHc9PQo=",
+      "url": "https://github.com/osklc/kairos/releases/download/v1.5.1/Kairos_1.5.0_x64_en-US.msi"
     }
   }
 }
