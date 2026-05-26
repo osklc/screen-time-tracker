@@ -1070,12 +1070,14 @@ fn get_daily_stats(app_handle: tauri::AppHandle) -> Result<Vec<DailyStat>, Strin
     let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
 
     let mut stmt = conn.prepare(
-        "SELECT strftime('%Y-%m-%d', datetime(start_time, 'unixepoch', 'localtime')) as day, 
-         SUM(end_time - start_time) as total_duration 
-         FROM sessions 
-         GROUP BY day 
-         ORDER BY day ASC 
-         LIMIT 7"
+        "SELECT day, total_duration FROM (
+            SELECT strftime('%Y-%m-%d', datetime(start_time, 'unixepoch', 'localtime')) as day, 
+                   SUM(end_time - start_time) as total_duration 
+            FROM sessions 
+            GROUP BY day 
+            ORDER BY day DESC 
+            LIMIT 7
+         ) ORDER BY day ASC"
     ).map_err(|e| e.to_string())?;
 
     let rows = stmt.query_map([], |row| {
@@ -1100,12 +1102,14 @@ fn get_weekly_stats(app_handle: tauri::AppHandle) -> Result<Vec<DailyStat>, Stri
     let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
 
     let mut stmt = conn.prepare(
-        "SELECT strftime('%Y-%W', datetime(start_time, 'unixepoch', 'localtime')) as week, 
-         SUM(end_time - start_time) as total_duration 
-         FROM sessions 
-         GROUP BY week 
-         ORDER BY week ASC 
-         LIMIT 12"
+        "SELECT week, total_duration FROM (
+            SELECT strftime('%Y-%W', datetime(start_time, 'unixepoch', 'localtime')) as week, 
+                   SUM(end_time - start_time) as total_duration 
+            FROM sessions 
+            GROUP BY week 
+            ORDER BY week DESC 
+            LIMIT 12
+         ) ORDER BY week ASC"
     ).map_err(|e| e.to_string())?;
 
     let rows = stmt.query_map([], |row| {
@@ -1130,12 +1134,14 @@ fn get_monthly_stats(app_handle: tauri::AppHandle) -> Result<Vec<DailyStat>, Str
     let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
 
     let mut stmt = conn.prepare(
-        "SELECT strftime('%Y-%m', datetime(start_time, 'unixepoch', 'localtime')) as month, 
-         SUM(end_time - start_time) as total_duration 
-         FROM sessions 
-         GROUP BY month 
-         ORDER BY month ASC 
-         LIMIT 12"
+        "SELECT month, total_duration FROM (
+            SELECT strftime('%Y-%m', datetime(start_time, 'unixepoch', 'localtime')) as month, 
+                   SUM(end_time - start_time) as total_duration 
+            FROM sessions 
+            GROUP BY month 
+            ORDER BY month DESC 
+            LIMIT 12
+         ) ORDER BY month ASC"
     ).map_err(|e| e.to_string())?;
 
     let rows = stmt.query_map([], |row| {

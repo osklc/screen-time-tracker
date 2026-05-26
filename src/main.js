@@ -107,6 +107,7 @@ let activeDictionary = {};
 let translationsConfig = null;
 let activeLanguage = "en";
 let internetDateCache = null;
+let timeOffset = 0;
 
 const LANGUAGE_STORAGE_KEY = "screen-time-language";
 const THEME_STORAGE_KEY = "screen-time-theme";
@@ -669,9 +670,14 @@ async function renderDailyPieChart() {
   }
 }
 
+function getCurrentDate() {
+  return new Date(Date.now() + timeOffset);
+}
+
 function renderCurrentDate(currentDateEl) {
-  if (!currentDateEl || !internetDateCache) return;
-  currentDateEl.textContent = formatDateForLanguage(internetDateCache, activeLanguage);
+  if (!currentDateEl) return;
+  const currentDate = getCurrentDate();
+  currentDateEl.textContent = formatDateForLanguage(currentDate, activeLanguage);
 }
 
 async function fetchDateFromInternet() {
@@ -684,7 +690,13 @@ async function fetchDateFromInternet() {
       const rawDateValue = payload.datetime || payload.dateTime;
       if (!rawDateValue) continue;
 
-      const parsedDate = new Date(rawDateValue);
+      // Ensure UTC date strings without timezone indicator are parsed as UTC (append "Z")
+      let dateString = rawDateValue;
+      if (!dateString.endsWith("Z") && !dateString.includes("+") && !/-\d{2}:\d{2}$/.test(dateString)) {
+        dateString += "Z";
+      }
+
+      const parsedDate = new Date(dateString);
       if (!Number.isNaN(parsedDate.getTime())) {
         return parsedDate;
       }
@@ -698,11 +710,14 @@ async function fetchDateFromInternet() {
 
 async function ensureCurrentDate(currentDateEl) {
   if (!internetDateCache) {
-    internetDateCache = await fetchDateFromInternet();
-  }
-
-  if (!internetDateCache) {
-    internetDateCache = new Date();
+    const internetDate = await fetchDateFromInternet();
+    if (internetDate) {
+      internetDateCache = internetDate;
+      timeOffset = internetDate.getTime() - Date.now();
+    } else {
+      internetDateCache = new Date();
+      timeOffset = 0;
+    }
   }
 
   renderCurrentDate(currentDateEl);
@@ -1377,6 +1392,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   initMementoMoriWidget();
 
   function refreshActivePage() {
+    renderCurrentDate(currentDateEl);
     const activePage = document.querySelector(".page.active");
     if (!activePage) return;
     const pageId = activePage.id;
