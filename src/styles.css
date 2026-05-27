@@ -1449,6 +1449,54 @@ body[data-theme="cyberpunk"] .chart-container div[id*="-empty"] {
   opacity: 0.8;
 }
 
+/* Custom Date Picker Styles */
+.custom-date-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--s-radius);
+  animation: fadeIn 0.25s ease-out;
+  box-shadow: var(--card-shadow);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.date-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.date-input-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.modern-date-input {
+  min-width: 150px;
+  background-color: var(--field-bg);
+  color: var(--text-on-field);
+  border: 1px solid var(--field-border);
+  border-radius: var(--s-radius);
+  padding: 0.55em 0.8em;
+  font-size: 0.95rem;
+}
+
+.modern-date-input:focus {
+  border-color: var(--accent-color);
+  outline: none;
+}
+
+
 @media (max-width: 900px) {
 
   .sidebar,

@@ -325,13 +325,26 @@
               style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
               <h3 data-i18n="daily.title" style="margin: 0;">Daily Screen Time</h3>
               <div class="energy-segmented" role="tablist">
-                <button type="button" class="energy-mode-btn chart-period-btn active" data-chart-period="daily"
+                <button type="button" class="energy-mode-btn screen-time-period-btn active" data-period="daily"
                   data-i18n="daily.tabDaily" style="min-width: 80px;">Daily</button>
-                <button type="button" class="energy-mode-btn chart-period-btn" data-chart-period="weekly"
+                <button type="button" class="energy-mode-btn screen-time-period-btn" data-period="weekly"
                   data-i18n="daily.tabWeekly" style="min-width: 80px;">Weekly</button>
-                <button type="button" class="energy-mode-btn chart-period-btn" data-chart-period="monthly"
+                <button type="button" class="energy-mode-btn screen-time-period-btn" data-period="monthly"
                   data-i18n="daily.tabMonthly" style="min-width: 80px;">Monthly</button>
+                <button type="button" class="energy-mode-btn screen-time-period-btn" data-period="custom"
+                  data-i18n="daily.tabCustom" style="min-width: 80px;">Custom</button>
               </div>
+            </div>
+            <div id="screen-time-date-picker-container" class="custom-date-picker" style="display: none;">
+              <div class="date-input-group">
+                <label for="screen-time-start-date" data-i18n="daily.startDate">Start Date</label>
+                <input type="date" id="screen-time-start-date" class="modern-date-input" />
+              </div>
+              <div class="date-input-group">
+                <label for="screen-time-end-date" data-i18n="daily.endDate">End Date</label>
+                <input type="date" id="screen-time-end-date" class="modern-date-input" />
+              </div>
+              <button type="button" id="screen-time-apply-btn" class="btn-productive" data-i18n="daily.apply">Apply</button>
             </div>
             <div class="chart-container" style="position: relative; height:30vh; width:100%">
               <canvas id="daily-chart"></canvas>
@@ -342,7 +355,31 @@
           </article>
 
           <article class="panel">
-            <h3 data-i18n="daily.energyTotalTitle">Daily Total Energy Consumption</h3>
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+              <h3 data-i18n="daily.energyTotalTitle" style="margin: 0;">Daily Total Energy Consumption</h3>
+              <div class="energy-segmented" role="tablist">
+                <button type="button" class="energy-mode-btn energy-period-btn active" data-period="daily"
+                  data-i18n="daily.tabDaily" style="min-width: 80px;">Daily</button>
+                <button type="button" class="energy-mode-btn energy-period-btn" data-period="weekly"
+                  data-i18n="daily.tabWeekly" style="min-width: 80px;">Weekly</button>
+                <button type="button" class="energy-mode-btn energy-period-btn" data-period="monthly"
+                  data-i18n="daily.tabMonthly" style="min-width: 80px;">Monthly</button>
+                <button type="button" class="energy-mode-btn energy-period-btn" data-period="custom"
+                  data-i18n="daily.tabCustom" style="min-width: 80px;">Custom</button>
+              </div>
+            </div>
+            <div id="energy-date-picker-container" class="custom-date-picker" style="display: none;">
+              <div class="date-input-group">
+                <label for="energy-start-date" data-i18n="daily.startDate">Start Date</label>
+                <input type="date" id="energy-start-date" class="modern-date-input" />
+              </div>
+              <div class="date-input-group">
+                <label for="energy-end-date" data-i18n="daily.endDate">End Date</label>
+                <input type="date" id="energy-end-date" class="modern-date-input" />
+              </div>
+              <button type="button" id="energy-apply-btn" class="btn-productive" data-i18n="daily.apply">Apply</button>
+            </div>
             <div class="chart-container" style="position: relative; height:30vh; width:100%">
               <canvas id="daily-energy-total-chart"></canvas>
               <div id="daily-energy-empty"
@@ -352,7 +389,31 @@
           </article>
 
           <article class="panel">
-            <h3 data-i18n="daily.categoryBreakdown">Time Distribution by Category</h3>
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+              <h3 data-i18n="daily.categoryBreakdown" style="margin: 0;">Time Distribution by Category</h3>
+              <div class="energy-segmented" role="tablist">
+                <button type="button" class="energy-mode-btn category-period-btn active" data-period="daily"
+                  data-i18n="daily.tabDaily" style="min-width: 80px;">Daily</button>
+                <button type="button" class="energy-mode-btn category-period-btn" data-period="weekly"
+                  data-i18n="daily.tabWeekly" style="min-width: 80px;">Weekly</button>
+                <button type="button" class="energy-mode-btn category-period-btn" data-period="monthly"
+                  data-i18n="daily.tabMonthly" style="min-width: 80px;">Monthly</button>
+                <button type="button" class="energy-mode-btn category-period-btn" data-period="custom"
+                  data-i18n="daily.tabCustom" style="min-width: 80px;">Custom</button>
+              </div>
+            </div>
+            <div id="category-date-picker-container" class="custom-date-picker" style="display: none;">
+              <div class="date-input-group">
+                <label for="category-start-date" data-i18n="daily.startDate">Start Date</label>
+                <input type="date" id="category-start-date" class="modern-date-input" />
+              </div>
+              <div class="date-input-group">
+                <label for="category-end-date" data-i18n="daily.endDate">End Date</label>
+                <input type="date" id="category-end-date" class="modern-date-input" />
+              </div>
+              <button type="button" id="category-apply-btn" class="btn-productive" data-i18n="daily.apply">Apply</button>
+            </div>
             <div class="chart-container" style="position: relative; height:30vh; width:100%">
               <canvas id="daily-pie-chart"></canvas>
               <div id="daily-pie-empty"

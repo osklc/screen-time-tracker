@@ -14,9 +14,9 @@
     "windows": [
       {
         "title": "Kairos: Screen Time Tracker",
-        "width": 800,
+        "width": 1000,
         "height": 640,
-        "minWidth": 800,
+        "minWidth": 1000,
         "minHeight": 640
       }
     ],

@@ -1161,6 +1161,89 @@ fn get_monthly_stats(app_handle: tauri::AppHandle) -> Result<Vec<DailyStat>, Str
 }
 
 #[tauri::command]
+fn get_stats_for_range(
+    app_handle: tauri::AppHandle,
+    start_timestamp: i64,
+    end_timestamp: i64,
+) -> Result<Vec<DailyStat>, String> {
+    let db_path = app_handle.path().app_data_dir().unwrap().join("tracker.db");
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+
+    let mut stmt = conn.prepare(
+        "SELECT day, total_duration FROM (
+            SELECT strftime('%Y-%m-%d', datetime(start_time, 'unixepoch', 'localtime')) as day, 
+                   SUM(end_time - start_time) as total_duration 
+            FROM sessions 
+            WHERE start_time >= ?1 AND start_time <= ?2
+            GROUP BY day 
+         ) ORDER BY day ASC"
+    ).map_err(|e| e.to_string())?;
+
+    let rows = stmt.query_map(params![start_timestamp, end_timestamp], |row| {
+        Ok(DailyStat {
+            day: row.get(0)?,
+            total_seconds: row.get(1)?,
+        })
+    }).map_err(|e| e.to_string())?;
+
+    let mut stats = Vec::new();
+    for row in rows {
+        if let Ok(stat) = row {
+            stats.push(stat);
+        }
+    }
+    Ok(stats)
+}
+
+#[tauri::command]
+fn get_range_summary(
+    app_handle: tauri::AppHandle,
+    start_timestamp: i64,
+    end_timestamp: i64,
+) -> Result<TodaySummary, String> {
+    let db_path = app_handle.path().app_data_dir().unwrap().join("tracker.db");
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+
+    let mut total_stmt = conn.prepare(
+        "SELECT SUM(end_time - start_time) 
+         FROM sessions 
+         WHERE start_time >= ?1 AND start_time <= ?2"
+    ).map_err(|e| e.to_string())?;
+    let total_screen_time_seconds: i64 = total_stmt.query_row(params![start_timestamp, end_timestamp], |row| row.get(0)).unwrap_or(0);
+
+    let mut longest_stmt = conn.prepare(
+        "SELECT MAX(end_time - start_time) 
+         FROM sessions 
+         WHERE start_time >= ?1 AND start_time <= ?2"
+    ).map_err(|e| e.to_string())?;
+    let longest_session_seconds: i64 = longest_stmt.query_row(params![start_timestamp, end_timestamp], |row| row.get(0)).unwrap_or(0);
+
+    let mut prod_stmt = conn.prepare(
+        "SELECT SUM(s.end_time - s.start_time) 
+         FROM sessions s
+         LEFT JOIN app_categories c ON s.app_name = c.app_name
+         WHERE s.start_time >= ?1 AND s.start_time <= ?2 AND COALESCE(s.category_override, c.category) = 'productive'"
+    ).map_err(|e| e.to_string())?;
+    let productive_time_seconds: i64 = prod_stmt.query_row(params![start_timestamp, end_timestamp], |row| row.get(0)).unwrap_or(0);
+
+    let mut dist_stmt = conn.prepare(
+        "SELECT SUM(s.end_time - s.start_time) 
+         FROM sessions s
+         LEFT JOIN app_categories c ON s.app_name = c.app_name
+         WHERE s.start_time >= ?1 AND s.start_time <= ?2 AND COALESCE(s.category_override, c.category) = 'distracting'"
+    ).map_err(|e| e.to_string())?;
+    let distracting_time_seconds: i64 = dist_stmt.query_row(params![start_timestamp, end_timestamp], |row| row.get(0)).unwrap_or(0);
+
+    Ok(TodaySummary {
+        total_screen_time_seconds,
+        productive_time_seconds,
+        distracting_time_seconds,
+        break_count: 0,
+        longest_session_seconds,
+    })
+}
+
+#[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
@@ -1652,7 +1735,7 @@ pub fn run() {
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, get_sessions, get_today_summary, get_all_apps, set_app_category, get_app_usage, get_daily_stats, get_weekly_stats, get_monthly_stats, get_pending_reviews, resolve_review, get_setting, set_setting, get_audio_file, set_power_smoothing_mode, get_power_smoothing_mode, show_stoic_notification, check_update, install_update, export_data, get_sentry_dsn, send_manual_bug_report])
+        .invoke_handler(tauri::generate_handler![greet, get_sessions, get_today_summary, get_all_apps, set_app_category, get_app_usage, get_daily_stats, get_weekly_stats, get_monthly_stats, get_stats_for_range, get_range_summary, get_pending_reviews, resolve_review, get_setting, set_setting, get_audio_file, set_power_smoothing_mode, get_power_smoothing_mode, show_stoic_notification, check_update, install_update, export_data, get_sentry_dsn, send_manual_bug_report])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -376,7 +376,9 @@ let dailyEnergyTotalChart = null;
 let dailyPieChart = null;
 let lastDailyStatsJson = "";
 
-let currentChartPeriod = "daily";
+let screenTimePeriod = "daily";
+let energyPeriod = "daily";
+let categoryPeriod = "daily";
 
 async function fetchAndRenderDailyStats() {
   const canvas = document.getElementById("daily-chart");
@@ -384,10 +386,22 @@ async function fetchAndRenderDailyStats() {
 
   try {
     let stats;
-    if (currentChartPeriod === "weekly") {
+    if (screenTimePeriod === "weekly") {
       stats = await invoke("get_weekly_stats");
-    } else if (currentChartPeriod === "monthly") {
+    } else if (screenTimePeriod === "monthly") {
       stats = await invoke("get_monthly_stats");
+    } else if (screenTimePeriod === "custom") {
+      const startInput = document.getElementById("screen-time-start-date")?.value;
+      const endInput = document.getElementById("screen-time-end-date")?.value;
+      if (startInput && endInput) {
+        const startDate = new Date(startInput + "T00:00:00");
+        const endDate = new Date(endInput + "T23:59:59");
+        const startTimestamp = Math.floor(startDate.getTime() / 1000);
+        const endTimestamp = Math.floor(endDate.getTime() / 1000);
+        stats = await invoke("get_stats_for_range", { startTimestamp, endTimestamp });
+      } else {
+        stats = [];
+      }
     } else {
       stats = await invoke("get_daily_stats");
     }
@@ -494,16 +508,71 @@ function renderDailyEnergyTotalChart() {
     const data = [];
     const now = new Date();
 
-    // Get last 7 days of history from localStorage
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const dayKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      const storageKey = ENERGY_STORAGE_PREFIX + dayKey;
-      const kwh = parseFloat(localStorage.getItem(storageKey) || "0");
-
-      labels.push(dayKey);
-      data.push(kwh);
+    if (energyPeriod === "weekly") {
+      for (let i = 11; i >= 0; i--) {
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay() - i * 7 + 1); // Monday of that week
+        let weekTotal = 0;
+        for (let d = 0; d < 7; d++) {
+          const tempDate = new Date(startOfWeek);
+          tempDate.setDate(startOfWeek.getDate() + d);
+          const dayKey = `${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, "0")}-${String(tempDate.getDate()).padStart(2, "0")}`;
+          const storageKey = ENERGY_STORAGE_PREFIX + dayKey;
+          weekTotal += parseFloat(localStorage.getItem(storageKey) || "0");
+        }
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        const label = `${String(startOfWeek.getMonth() + 1).padStart(2, "0")}/${String(startOfWeek.getDate()).padStart(2, "0")} - ${String(endOfWeek.getMonth() + 1).padStart(2, "0")}/${String(endOfWeek.getDate()).padStart(2, "0")}`;
+        labels.push(label);
+        data.push(weekTotal);
+      }
+    } else if (energyPeriod === "monthly") {
+      const monthNamesEn = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const monthNamesTr = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+      const activeLang = localStorage.getItem(LANGUAGE_STORAGE_KEY) || "en";
+      for (let i = 11; i >= 0; i--) {
+        const tempDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const year = tempDate.getFullYear();
+        const month = tempDate.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        let monthTotal = 0;
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dayKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+          const storageKey = ENERGY_STORAGE_PREFIX + dayKey;
+          monthTotal += parseFloat(localStorage.getItem(storageKey) || "0");
+        }
+        const monthLabel = activeLang === "tr" ? monthNamesTr[month] : monthNamesEn[month];
+        labels.push(`${monthLabel} ${year}`);
+        data.push(monthTotal);
+      }
+    } else if (energyPeriod === "custom") {
+      const startInput = document.getElementById("energy-start-date")?.value;
+      const endInput = document.getElementById("energy-end-date")?.value;
+      if (startInput && endInput) {
+        const start = new Date(startInput + "T00:00:00");
+        const end = new Date(endInput + "T00:00:00");
+        const dayDiff = Math.round((end - start) / (1000 * 60 * 60 * 24));
+        for (let i = 0; i <= dayDiff; i++) {
+          const d = new Date(start);
+          d.setDate(d.getDate() + i);
+          const dayKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          const storageKey = ENERGY_STORAGE_PREFIX + dayKey;
+          const kwh = parseFloat(localStorage.getItem(storageKey) || "0");
+          labels.push(dayKey);
+          data.push(kwh);
+        }
+      }
+    } else {
+      // Get last 7 days of history from localStorage
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const dayKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const storageKey = ENERGY_STORAGE_PREFIX + dayKey;
+        const kwh = parseFloat(localStorage.getItem(storageKey) || "0");
+        labels.push(dayKey);
+        data.push(kwh);
+      }
     }
 
     const computedStyle = getComputedStyle(document.body);
@@ -513,7 +582,18 @@ function renderDailyEnergyTotalChart() {
     const chartGridColor = computedStyle.getPropertyValue('--chart-grid-color').trim() || 'rgba(0,0,0,0.1)';
 
     const emptyDiv = document.getElementById("daily-energy-empty");
-    if (!data || data.length === 0 || data.every(v => v === 0)) {
+
+    // Filter out periods with 0 energy to match screen time chart behavior
+    const finalLabels = [];
+    const finalData = [];
+    for (let i = 0; i < data.length; i++) {
+      if (data[i] > 0) {
+        finalLabels.push(labels[i]);
+        finalData.push(data[i]);
+      }
+    }
+
+    if (finalData.length === 0) {
       canvas.style.display = "none";
       if (emptyDiv) emptyDiv.style.display = "flex";
       return;
@@ -531,10 +611,10 @@ function renderDailyEnergyTotalChart() {
     dailyEnergyTotalChart = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: labels,
+        labels: finalLabels,
         datasets: [{
           label: translate("daily.energyTotalTitle"),
-          data: data,
+          data: finalData,
           backgroundColor: chartBgColor,
           borderColor: accentColor,
           borderWidth: 1,
@@ -589,7 +669,36 @@ async function renderDailyPieChart() {
   if (!canvas) return;
 
   try {
-    const summary = await invoke("get_today_summary");
+    let summary;
+    if (categoryPeriod === "weekly") {
+      const today = new Date();
+      const lastWeek = new Date();
+      lastWeek.setDate(today.getDate() - 7);
+      const startTimestamp = Math.floor(lastWeek.getTime() / 1000);
+      const endTimestamp = Math.floor(today.getTime() / 1000);
+      summary = await invoke("get_range_summary", { startTimestamp, endTimestamp });
+    } else if (categoryPeriod === "monthly") {
+      const today = new Date();
+      const lastMonth = new Date();
+      lastMonth.setDate(today.getDate() - 30);
+      const startTimestamp = Math.floor(lastMonth.getTime() / 1000);
+      const endTimestamp = Math.floor(today.getTime() / 1000);
+      summary = await invoke("get_range_summary", { startTimestamp, endTimestamp });
+    } else if (categoryPeriod === "custom") {
+      const startInput = document.getElementById("category-start-date")?.value;
+      const endInput = document.getElementById("category-end-date")?.value;
+      if (startInput && endInput) {
+        const startDate = new Date(startInput + "T00:00:00");
+        const endDate = new Date(endInput + "T23:59:59");
+        const startTimestamp = Math.floor(startDate.getTime() / 1000);
+        const endTimestamp = Math.floor(endDate.getTime() / 1000);
+        summary = await invoke("get_range_summary", { startTimestamp, endTimestamp });
+      } else {
+        summary = { total_screen_time_seconds: 0, productive_time_seconds: 0, distracting_time_seconds: 0 };
+      }
+    } else {
+      summary = await invoke("get_today_summary");
+    }
     const totalSeconds = summary.total_screen_time_seconds || 0;
     const prodSeconds = summary.productive_time_seconds || 0;
     const distSeconds = summary.distracting_time_seconds || 0;
@@ -1410,9 +1519,15 @@ window.addEventListener("DOMContentLoaded", async () => {
     } else if (pageId === "page-settings") {
       loadAppCategories();
     } else if (pageId === "page-daily") {
-      fetchAndRenderDailyStats();
-      renderDailyEnergyTotalChart();
-      renderDailyPieChart();
+      if (screenTimePeriod === "daily") {
+        fetchAndRenderDailyStats();
+      }
+      if (energyPeriod === "daily") {
+        renderDailyEnergyTotalChart();
+      }
+      if (categoryPeriod === "daily") {
+        renderDailyPieChart();
+      }
     } else if (pageId === "page-pomodoro") {
       updatePomodoroUI();
     }
@@ -2290,20 +2405,153 @@ async function handleDataExport(format) {
 document.getElementById("export-csv-btn")?.addEventListener("click", () => handleDataExport("csv"));
 document.getElementById("export-json-btn")?.addEventListener("click", () => handleDataExport("json"));
 
-document.querySelectorAll(".chart-period-btn").forEach(btn => {
-  btn.addEventListener("click", (e) => {
-    // Remove active class from all
-    document.querySelectorAll(".chart-period-btn").forEach(b => {
-      b.classList.remove("active");
-      b.setAttribute("aria-pressed", "false");
-    });
-    // Add active to clicked
-    const target = e.target;
-    target.classList.add("active");
-    target.setAttribute("aria-pressed", "true");
+  function formatLocalDate(date) {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
 
-    // Update period and fetch
-    currentChartPeriod = target.getAttribute("data-chart-period") || "daily";
+  const today = new Date();
+  const lastWeek = new Date();
+  lastWeek.setDate(today.getDate() - 7);
+  const defaultStart = formatLocalDate(lastWeek);
+  const defaultEnd = formatLocalDate(today);
+
+  // 1. Screen Time Controls
+  const screenTimeContainer = document.getElementById("screen-time-date-picker-container");
+  const screenTimeStart = document.getElementById("screen-time-start-date");
+  const screenTimeEnd = document.getElementById("screen-time-end-date");
+  const screenTimeApply = document.getElementById("screen-time-apply-btn");
+
+  if (screenTimeStart && screenTimeEnd) {
+    screenTimeStart.value = defaultStart;
+    screenTimeEnd.value = defaultEnd;
+  }
+
+  document.querySelectorAll(".screen-time-period-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      document.querySelectorAll(".screen-time-period-btn").forEach(b => {
+        b.classList.remove("active");
+        b.setAttribute("aria-pressed", "false");
+      });
+      const target = e.target;
+      target.classList.add("active");
+      target.setAttribute("aria-pressed", "true");
+
+      screenTimePeriod = target.getAttribute("data-period") || "daily";
+
+      if (screenTimePeriod === "custom") {
+        if (screenTimeContainer) screenTimeContainer.style.display = "flex";
+      } else {
+        if (screenTimeContainer) screenTimeContainer.style.display = "none";
+      }
+      fetchAndRenderDailyStats();
+    });
+  });
+
+  screenTimeApply?.addEventListener("click", () => {
+    const startVal = screenTimeStart?.value;
+    const endVal = screenTimeEnd?.value;
+    if (!startVal || !endVal) {
+      alert(translate("daily.alertSelectDates"));
+      return;
+    }
+    if (new Date(startVal) > new Date(endVal)) {
+      alert(translate("daily.alertInvalidRange"));
+      return;
+    }
     fetchAndRenderDailyStats();
   });
-});
+
+  // 2. Energy Controls
+  const energyContainer = document.getElementById("energy-date-picker-container");
+  const energyStart = document.getElementById("energy-start-date");
+  const energyEnd = document.getElementById("energy-end-date");
+  const energyApply = document.getElementById("energy-apply-btn");
+
+  if (energyStart && energyEnd) {
+    energyStart.value = defaultStart;
+    energyEnd.value = defaultEnd;
+  }
+
+  document.querySelectorAll(".energy-period-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      document.querySelectorAll(".energy-period-btn").forEach(b => {
+        b.classList.remove("active");
+        b.setAttribute("aria-pressed", "false");
+      });
+      const target = e.target;
+      target.classList.add("active");
+      target.setAttribute("aria-pressed", "true");
+
+      energyPeriod = target.getAttribute("data-period") || "daily";
+
+      if (energyPeriod === "custom") {
+        if (energyContainer) energyContainer.style.display = "flex";
+      } else {
+        if (energyContainer) energyContainer.style.display = "none";
+      }
+      renderDailyEnergyTotalChart();
+    });
+  });
+
+  energyApply?.addEventListener("click", () => {
+    const startVal = energyStart?.value;
+    const endVal = energyEnd?.value;
+    if (!startVal || !endVal) {
+      alert(translate("daily.alertSelectDates"));
+      return;
+    }
+    if (new Date(startVal) > new Date(endVal)) {
+      alert(translate("daily.alertInvalidRange"));
+      return;
+    }
+    renderDailyEnergyTotalChart();
+  });
+
+  // 3. Category Controls
+  const categoryContainer = document.getElementById("category-date-picker-container");
+  const categoryStart = document.getElementById("category-start-date");
+  const categoryEnd = document.getElementById("category-end-date");
+  const categoryApply = document.getElementById("category-apply-btn");
+
+  if (categoryStart && categoryEnd) {
+    categoryStart.value = defaultStart;
+    categoryEnd.value = defaultEnd;
+  }
+
+  document.querySelectorAll(".category-period-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      document.querySelectorAll(".category-period-btn").forEach(b => {
+        b.classList.remove("active");
+        b.setAttribute("aria-pressed", "false");
+      });
+      const target = e.target;
+      target.classList.add("active");
+      target.setAttribute("aria-pressed", "true");
+
+      categoryPeriod = target.getAttribute("data-period") || "daily";
+
+      if (categoryPeriod === "custom") {
+        if (categoryContainer) categoryContainer.style.display = "flex";
+      } else {
+        if (categoryContainer) categoryContainer.style.display = "none";
+      }
+      renderDailyPieChart();
+    });
+  });
+
+  categoryApply?.addEventListener("click", () => {
+    const startVal = categoryStart?.value;
+    const endVal = categoryEnd?.value;
+    if (!startVal || !endVal) {
+      alert(translate("daily.alertSelectDates"));
+      return;
+    }
+    if (new Date(startVal) > new Date(endVal)) {
+      alert(translate("daily.alertInvalidRange"));
+      return;
+    }
+    renderDailyPieChart();
+  });
