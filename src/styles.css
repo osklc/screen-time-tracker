@@ -495,12 +495,51 @@ body {
 }
 
 .sidebar.collapsed .sidebar-footer {
-  display: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 0 0 0;
+  border-top: 1px solid var(--sidebar-btn-border);
+  opacity: 0.5;
+  transition: opacity 0.25s ease;
 }
 
-/* Hide the report button on small viewports or when sidebar is collapsed */
+.sidebar.collapsed .sidebar-footer:hover {
+  opacity: 1;
+}
+
+.sidebar.collapsed .sidebar-footer .version-text,
 .sidebar.collapsed .sidebar-footer #bug-report-btn {
   display: none !important;
+}
+
+.sidebar.collapsed .sidebar-footer #bug-report-collapsed-btn {
+  display: inline-flex !important;
+}
+
+.btn-bug-collapsed {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: var(--s-radius);
+  border: 1px solid var(--sidebar-btn-border);
+  background: var(--sidebar-btn-bg);
+  color: var(--sidebar-text);
+  cursor: pointer;
+  box-shadow: none;
+  transition: border-color 0.25s, background-color 0.25s;
+}
+
+.btn-bug-collapsed:hover {
+  border-color: var(--field-hover-border);
+  background: var(--nav-hover-bg);
+}
+
+.btn-bug-collapsed:active {
+  background: var(--field-active-bg);
 }
 
 @media (max-width: 720px) {
@@ -1439,9 +1478,22 @@ body[data-theme="cyberpunk"] .chart-container div[id*="-empty"] {
     padding: 18px;
   }
 
-  /* When sidebar switches to icon mode at <=900px, hide the report button too */
+  /* When sidebar switches to icon mode at <=900px, hide version and standard report button, show collapsed button */
+  .sidebar-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 0 0 0;
+    border-top: 1px solid var(--sidebar-btn-border);
+  }
+
+  .sidebar-footer .version-text,
   .sidebar-footer #bug-report-btn {
     display: none !important;
+  }
+
+  .sidebar-footer #bug-report-collapsed-btn {
+    display: inline-flex !important;
   }
 
   .topbar {

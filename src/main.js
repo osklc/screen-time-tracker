@@ -73,6 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function closeModal() { if (modal) modal.style.display = 'none'; }
 
   if (bugBtn) bugBtn.addEventListener('click', openModal);
+  const bugBtnCollapsed = document.getElementById('bug-report-collapsed-btn');
+  if (bugBtnCollapsed) bugBtnCollapsed.addEventListener('click', openModal);
   if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 
   if (sendBtn) sendBtn.addEventListener('click', async () => {
