@@ -1167,7 +1167,13 @@ fn greet(name: &str) -> String {
 
 #[tauri::command]
 fn get_sentry_dsn() -> Option<String> {
-    std::env::var("SENTRY_DSN").ok().filter(|s| !s.is_empty())
+    let dsn = std::env::var("SENTRY_DSN")
+        .ok()
+        .or_else(|| option_env!("SENTRY_DSN").map(|s| s.to_string()))
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "https://85ce1aec4ea8b48d5e8416cfba2250f8@o4511383477485568.ingest.de.sentry.io/4511383479648336".to_string());
+    Some(dsn)
 }
 
 #[tauri::command]
@@ -1386,31 +1392,32 @@ async fn export_data(app_handle: tauri::AppHandle, format: String) -> Result<Opt
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Initialize Sentry early if DSN provided via environment variable.
-    let _sentry_guard = match std::env::var("SENTRY_DSN") {
-        Ok(dsn) if !dsn.is_empty() => {
-            let guard = sentry::init((dsn.as_str(), sentry::ClientOptions {
-                release: Some(env!("CARGO_PKG_VERSION").into()),
-                ..Default::default()
-            }));
+    // Initialize Sentry early with a fallback DSN.
+    let dsn = std::env::var("SENTRY_DSN")
+        .ok()
+        .or_else(|| option_env!("SENTRY_DSN").map(|s| s.to_string()))
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "https://85ce1aec4ea8b48d5e8416cfba2250f8@o4511383477485568.ingest.de.sentry.io/4511383479648336".to_string());
 
-            // Register a panic hook that scrubs local paths before sending.
-            std::panic::set_hook(Box::new(|info| {
-                let payload = if let Some(s) = info.payload().downcast_ref::<&str>() {
-                    s.to_string()
-                } else if let Some(s) = info.payload().downcast_ref::<String>() {
-                    s.clone()
-                } else {
-                    format!("panic: {}", info)
-                };
-                let scrubbed = scrub_paths(&payload);
-                let _ = sentry::capture_message(&scrubbed, sentry::Level::Error);
-            }));
+    let _sentry_guard = sentry::init((dsn.as_str(), sentry::ClientOptions {
+        release: sentry::release_name!(),
+        send_default_pii: true,
+        ..Default::default()
+    }));
 
-            Some(guard)
-        }
-        _ => None,
-    };
+    // Register a panic hook that scrubs local paths before sending.
+    std::panic::set_hook(Box::new(|info| {
+        let payload = if let Some(s) = info.payload().downcast_ref::<&str>() {
+            s.to_string()
+        } else if let Some(s) = info.payload().downcast_ref::<String>() {
+            s.clone()
+        } else {
+            format!("panic: {}", info)
+        };
+        let scrubbed = scrub_paths(&payload);
+        let _ = sentry::capture_message(&scrubbed, sentry::Level::Error);
+    }));
     tauri::Builder::default()
         .manage(PowerMonitorState {
             smoothing_mode: Arc::new(Mutex::new(PowerSmoothingMode::Balanced)),

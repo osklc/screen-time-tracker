@@ -15,7 +15,9 @@ function scrubPaths(str) {
 
 async function initSentry() {
   try {
-    const dsn = await invoke('get_sentry_dsn');
+    let dsn = await invoke('get_sentry_dsn');
+    if (!dsn) return;
+    dsn = dsn.trim();
     if (!dsn) return;
     const version = document.querySelector('meta[name="application-version"]')?.getAttribute('content') || 'unknown';
     Sentry.init({

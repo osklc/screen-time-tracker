@@ -1,6 +1,6 @@
 [package]
 name = "kairos"
-version = "1.5.1"
+version = "1.5.2"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
@@ -35,7 +35,7 @@ tokio = { version = "1", features = ["time"] }
 libloading = "0.8"
 tauri-plugin-updater = "2.10.1"
 tauri-plugin-dialog = "2.7.1"
-sentry = "0.29.0"
+sentry = "0.48.2"
 regex = "1"
 
 [target.'cfg(windows)'.dependencies]

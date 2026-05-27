@@ -31,6 +31,7 @@ dist-ssr
 .github/instructions/
 .github/AUTO-UPDATE-TESTING.md
 .github/ROADMAP.md
+ROADMAP_NEW.md
 .github/VERSION-MANAGEMENT.md
 # Allow workflows and release.yml
 !.github/
