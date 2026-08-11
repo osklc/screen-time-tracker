@@ -155,7 +155,21 @@
       "update.installing": "Installing...",
       "update.failed": "Update failed.",
       "update.downloadManually": "Download Manually",
-      "chart.noData": "Loading data or not enough data to display..."
+      "chart.noData": "Loading data or not enough data to display...",
+      "goal.title": "Daily Screen Time Goal",
+      "goal.onTrack": "On Track",
+      "goal.approaching": "Approaching Limit",
+      "goal.exceeded": "Limit Reached",
+      "goal.productiveProgress": "Productive Goal",
+      "goal.settingsTitle": "Daily Screen Time Goals & Limits",
+      "goal.enableLimit": "Enable Daily Screen Time Limit",
+      "goal.maxLimit": "Max Daily Screen Time",
+      "goal.targetProductive": "Target Productive Time",
+      "goal.notifyOnExceed": "Show notification when limit is reached",
+      "goal.save": "Save Goal Settings",
+      "goal.saved": "Goal settings saved!",
+      "goal.notificationTitle": "Daily Screen Time Limit Reached",
+      "goal.notificationBody": "You have reached your daily screen time limit."
     },
     "tr": {
       "brand.title": "Kairos",
@@ -311,7 +325,21 @@
       "update.installing": "Yükleniyor...",
       "update.failed": "Güncelleme başarısız.",
       "update.downloadManually": "Manuel İndir",
-      "chart.noData": "Veriler yükleniyor veya gösterilecek yeterli veri yok..."
+      "chart.noData": "Veriler yükleniyor veya gösterilecek yeterli veri yok...",
+      "goal.title": "Günlük Ekran Süresi Hedefi",
+      "goal.onTrack": "Hedef Dahilinde",
+      "goal.approaching": "Limite Yaklaşıldı",
+      "goal.exceeded": "Limit Aşıldı",
+      "goal.productiveProgress": "Üretken Süre Hedefi",
+      "goal.settingsTitle": "Günlük Ekran Süresi Hedefleri ve Limitleri",
+      "goal.enableLimit": "Günlük Ekran Süresi Limitini Etkinleştir",
+      "goal.maxLimit": "Maksimum Günlük Ekran Süresi",
+      "goal.targetProductive": "Hedeflenen Üretken Süre",
+      "goal.notifyOnExceed": "Limit dolduğunda bildirim göster",
+      "goal.save": "Hedef Ayarlarını Kaydet",
+      "goal.saved": "Hedef ayarları kaydedildi!",
+      "goal.notificationTitle": "Günlük Ekran Süresi Limiti Doldu",
+      "goal.notificationBody": "Belirlediğiniz günlük ekran süresi limitine ulaştınız."
     }
   }
 }

@@ -208,6 +208,30 @@
           </div>
         </div>
 
+        <!-- Daily Goal Progress Widget -->
+        <div class="daily-goal-widget" id="daily-goal-widget">
+          <div class="daily-goal-header">
+            <div class="daily-goal-title">
+              <svg class="goal-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="6"></circle>
+                <circle cx="12" cy="12" r="2"></circle>
+              </svg>
+              <span data-i18n="goal.title">Daily Screen Time Goal</span>
+            </div>
+            <div class="daily-goal-badge" id="daily-goal-badge">
+              <span id="daily-goal-badge-text" data-i18n="goal.onTrack">On Track</span>
+            </div>
+          </div>
+          <div class="daily-goal-bar-container">
+            <div class="daily-goal-bar" id="daily-goal-bar" style="width: 0%;"></div>
+          </div>
+          <div class="daily-goal-stats">
+            <span id="daily-goal-progress-text">0m / 4h 0m (0%)</span>
+            <span id="daily-goal-productive-text" class="daily-goal-subtext"></span>
+          </div>
+        </div>
+
         <div class="cards-grid">
           <article class="card">
             <h3 data-i18n="overview.activeWindow">Active Window</h3>
@@ -682,6 +706,48 @@
           <div class="setting-item setting-row">
             <input type="checkbox" id="stoic-notifications-toggle" />
             <label class="setting-label" for="stoic-notifications-toggle" data-i18n="settings.stoicNotifications">Stoik Bildirimler</label>
+          </div>
+
+          <div class="setting-item">
+            <p class="setting-label" data-i18n="goal.settingsTitle">Daily Screen Time Goals & Limits</p>
+            <div class="goal-settings-box">
+              <div class="setting-row" style="margin-bottom: 12px;">
+                <input type="checkbox" id="daily-goal-enable-toggle" checked />
+                <label class="setting-label" for="daily-goal-enable-toggle" data-i18n="goal.enableLimit">Enable Daily Screen Time Limit</label>
+              </div>
+
+              <div class="goal-input-grid">
+                <div class="goal-input-group">
+                  <label for="daily-goal-max-hours" data-i18n="goal.maxLimit">Max Daily Screen Time</label>
+                  <div class="goal-duration-inputs">
+                    <input type="number" id="daily-goal-max-hours" min="0" max="24" value="4" />
+                    <span>h</span>
+                    <input type="number" id="daily-goal-max-minutes" min="0" max="59" value="0" />
+                    <span>m</span>
+                  </div>
+                </div>
+
+                <div class="goal-input-group">
+                  <label for="daily-goal-prod-hours" data-i18n="goal.targetProductive">Target Productive Time</label>
+                  <div class="goal-duration-inputs">
+                    <input type="number" id="daily-goal-prod-hours" min="0" max="24" value="2" />
+                    <span>h</span>
+                    <input type="number" id="daily-goal-prod-minutes" min="0" max="59" value="0" />
+                    <span>m</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="setting-row" style="margin-top: 12px; margin-bottom: 12px;">
+                <input type="checkbox" id="daily-goal-notify-toggle" checked />
+                <label class="setting-label" for="daily-goal-notify-toggle" data-i18n="goal.notifyOnExceed">Show notification when limit is reached</label>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+                <button type="button" id="save-daily-goal-btn" class="btn-productive" style="max-width: 220px;" data-i18n="goal.save">Save Goal Settings</button>
+                <span id="save-daily-goal-status" style="display: none; color: #4CAF50; font-size: 0.9rem; font-weight: 500;" data-i18n="goal.saved">Goal settings saved!</span>
+              </div>
+            </div>
           </div>
 
           <div class="setting-item">

@@ -232,6 +232,166 @@ function formatDuration(totalSeconds) {
   return `${minutes}${mLabel}`;
 }
 
+// ── Daily Screen Time Goal Logic ──
+const DAILY_GOAL_STORAGE_KEY = "screen-time-daily-goal";
+let dailyGoalNotifiedToday = false;
+
+function loadDailyGoalSettings() {
+  try {
+    const data = localStorage.getItem(DAILY_GOAL_STORAGE_KEY);
+    if (data) {
+      return JSON.parse(data);
+    }
+  } catch (e) {
+    console.error("Failed to load daily goal settings:", e);
+  }
+  return {
+    enabled: true,
+    targetHours: 4,
+    targetMinutes: 0,
+    productiveGoalHours: 2,
+    productiveGoalMinutes: 0,
+    notifyOnExceed: true
+  };
+}
+
+function saveDailyGoalSettings(settings) {
+  try {
+    localStorage.setItem(DAILY_GOAL_STORAGE_KEY, JSON.stringify(settings));
+  } catch (e) {
+    console.error("Failed to save daily goal settings:", e);
+  }
+}
+
+function checkDailyGoalNotification(goal, currentSeconds, totalGoalSeconds) {
+  if (!goal.notifyOnExceed || dailyGoalNotifiedToday) return;
+
+  const todayKey = `daily_goal_notified_${new Date().toISOString().slice(0, 10)}`;
+  if (localStorage.getItem(todayKey)) {
+    dailyGoalNotifiedToday = true;
+    return;
+  }
+
+  if (currentSeconds >= totalGoalSeconds && totalGoalSeconds > 0) {
+    dailyGoalNotifiedToday = true;
+    localStorage.setItem(todayKey, "true");
+
+    const title = translate("goal.notificationTitle");
+    const body = translate("goal.notificationBody");
+
+    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+      new Notification(title, { body });
+    } else if (typeof Notification !== "undefined" && Notification.permission !== "denied") {
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          new Notification(title, { body });
+        }
+      });
+    }
+  }
+}
+
+function updateDailyGoalWidget(summary) {
+  const widgetEl = document.getElementById("daily-goal-widget");
+  const barEl = document.getElementById("daily-goal-bar");
+  const badgeEl = document.getElementById("daily-goal-badge");
+  const badgeTextEl = document.getElementById("daily-goal-badge-text");
+  const progressTextEl = document.getElementById("daily-goal-progress-text");
+  const prodTextEl = document.getElementById("daily-goal-productive-text");
+
+  if (!widgetEl || !barEl || !badgeEl || !badgeTextEl || !progressTextEl) return;
+
+  const goal = loadDailyGoalSettings();
+  if (!goal.enabled) {
+    widgetEl.style.display = "none";
+    return;
+  }
+  widgetEl.style.display = "block";
+
+  const totalGoalSeconds = (goal.targetHours * 3600) + (goal.targetMinutes * 60);
+  const currentTotalSeconds = summary?.total_screen_time_seconds || 0;
+  const currentProdSeconds = summary?.productive_time_seconds || 0;
+
+  const percentage = totalGoalSeconds > 0
+    ? Math.min(100, Math.round((currentTotalSeconds / totalGoalSeconds) * 100))
+    : 0;
+
+  const currentFormatted = formatDuration(currentTotalSeconds);
+  const targetFormatted = formatDuration(totalGoalSeconds);
+  progressTextEl.textContent = `${currentFormatted} / ${targetFormatted} (${percentage}%)`;
+
+  const prodGoalSeconds = (goal.productiveGoalHours * 3600) + (goal.productiveGoalMinutes * 60);
+  if (prodGoalSeconds > 0 && prodTextEl) {
+    const prodFormatted = formatDuration(currentProdSeconds);
+    const prodTargetFormatted = formatDuration(prodGoalSeconds);
+    const prodPercentage = Math.round((currentProdSeconds / prodGoalSeconds) * 100);
+    prodTextEl.textContent = `${translate("goal.productiveProgress")}: ${prodFormatted} / ${prodTargetFormatted} (${prodPercentage}%)`;
+  } else if (prodTextEl) {
+    prodTextEl.textContent = "";
+  }
+
+  barEl.style.width = `${percentage}%`;
+
+  barEl.classList.remove("bar-ontrack", "bar-approaching", "bar-exceeded");
+  badgeEl.classList.remove("badge-ontrack", "badge-approaching", "badge-exceeded");
+
+  if (percentage >= 100) {
+    barEl.classList.add("bar-exceeded");
+    badgeEl.classList.add("badge-exceeded");
+    badgeTextEl.textContent = translate("goal.exceeded");
+    checkDailyGoalNotification(goal, currentTotalSeconds, totalGoalSeconds);
+  } else if (percentage >= 80) {
+    barEl.classList.add("bar-approaching");
+    badgeEl.classList.add("badge-approaching");
+    badgeTextEl.textContent = translate("goal.approaching");
+  } else {
+    barEl.classList.add("bar-ontrack");
+    badgeEl.classList.add("badge-ontrack");
+    badgeTextEl.textContent = translate("goal.onTrack");
+  }
+}
+
+function initDailyGoalSettingsUI() {
+  const enableToggle = document.getElementById("daily-goal-enable-toggle");
+  const maxHoursEl = document.getElementById("daily-goal-max-hours");
+  const maxMinsEl = document.getElementById("daily-goal-max-minutes");
+  const prodHoursEl = document.getElementById("daily-goal-prod-hours");
+  const prodMinsEl = document.getElementById("daily-goal-prod-minutes");
+  const notifyToggle = document.getElementById("daily-goal-notify-toggle");
+  const saveBtn = document.getElementById("save-daily-goal-btn");
+  const statusEl = document.getElementById("save-daily-goal-status");
+
+  if (!enableToggle || !maxHoursEl || !saveBtn) return;
+
+  const goal = loadDailyGoalSettings();
+  enableToggle.checked = goal.enabled;
+  maxHoursEl.value = goal.targetHours;
+  maxMinsEl.value = goal.targetMinutes;
+  if (prodHoursEl) prodHoursEl.value = goal.productiveGoalHours;
+  if (prodMinsEl) prodMinsEl.value = goal.productiveGoalMinutes;
+  if (notifyToggle) notifyToggle.checked = goal.notifyOnExceed;
+
+  saveBtn.addEventListener("click", () => {
+    const updated = {
+      enabled: enableToggle.checked,
+      targetHours: Math.max(0, parseInt(maxHoursEl.value) || 0),
+      targetMinutes: Math.max(0, Math.min(59, parseInt(maxMinsEl.value) || 0)),
+      productiveGoalHours: Math.max(0, parseInt(prodHoursEl?.value) || 0),
+      productiveGoalMinutes: Math.max(0, Math.min(59, parseInt(prodMinsEl?.value) || 0)),
+      notifyOnExceed: notifyToggle ? notifyToggle.checked : true
+    };
+    saveDailyGoalSettings(updated);
+    fetchAndRenderSummary();
+
+    if (statusEl) {
+      statusEl.style.display = "inline";
+      setTimeout(() => {
+        statusEl.style.display = "none";
+      }, 2500);
+    }
+  });
+}
+
 async function fetchAndRenderSummary() {
   const statTotalEl = document.getElementById("stat-total-time");
   const statProdEl = document.getElementById("stat-productive-time");
@@ -252,6 +412,8 @@ async function fetchAndRenderSummary() {
     statBreakEl.textContent = pomoStats.breaksTaken.toString();
 
     statLongestEl.textContent = formatDuration(summary.longest_session_seconds);
+
+    updateDailyGoalWidget(summary);
   } catch (err) {
     console.error("Failed to fetch summary:", err);
   }
@@ -1503,6 +1665,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   fetchAndRenderSummary();
   fetchAndRenderAppUsage();
   initMementoMoriWidget();
+  initDailyGoalSettingsUI();
 
   function refreshActivePage() {
     renderCurrentDate(currentDateEl);
