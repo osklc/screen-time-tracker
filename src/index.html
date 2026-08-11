@@ -13,7 +13,7 @@
     href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
     rel="stylesheet" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="application-version" content="1.5.3" />
+  <meta name="application-version" content="1.5.4" />
   <title>Kairos: Screen Time Tracker</title>
   <script src="assets/vendor/chart.umd.min.js"></script>
   <script type="module" src="bundle.js" defer></script>
@@ -58,7 +58,7 @@
     <div class="modal-content">
       <h3 data-i18n="update.title">Update Available</h3>
         <p><span data-i18n="update.message">A new version of Kairos is available:</span> <strong
-          id="update-version">v1.5.3</strong></p>
+          id="update-version">v1.5.4</strong></p>
       <div id="update-modal-error" style="display: none; color: #ff4a4a; margin-bottom: 12px; font-size: 0.9rem; text-align: center; line-height: 1.4; word-break: break-word; overflow-wrap: anywhere;"></div>
       <div class="modal-buttons">
         <button id="update-btn-install" class="btn-productive" data-i18n="update.install">Install & Restart</button>
@@ -148,7 +148,7 @@
         </button>
       </nav>
       <div class="sidebar-footer">
-        <span class="version-text">v1.5.3</span>
+        <span class="version-text">v1.5.4</span>
         <button id="bug-report-btn" class="btn-small" style="margin-left:8px;">Report Bug</button>
         <button id="bug-report-collapsed-btn" class="btn-small btn-bug-collapsed" style="display:none;" title="Report Bug">
           <svg class="icon-bug" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -193,69 +193,122 @@
       </header>
 
       <section class="page active" id="page-overview" aria-label="Overview page">
-        <!-- Memento Mori Widget -->
-        <div class="memento-mori-widget">
-          <div class="memento-mori-label">
-            <span data-i18n="overview.mementoMori">Time Left Today</span>
-            <span id="memento-mori-time">0h 0m</span>
+        <!-- Hero Widgets Banner (Memento Mori + Daily Goal) -->
+        <div class="overview-hero-grid">
+          <!-- Memento Mori Widget -->
+          <div class="memento-mori-widget">
+            <div class="memento-mori-label">
+              <div class="memento-title-group">
+                <svg class="memento-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span data-i18n="overview.mementoMori">Time Left Today</span>
+              </div>
+              <span id="memento-mori-time">0h 0m</span>
+            </div>
+            <div class="memento-mori-bar-container">
+              <div class="memento-mori-bar" id="memento-mori-bar"></div>
+            </div>
+            <div class="memento-mori-info">
+              <span class="memento-mori-quote" data-i18n="overview.mementoQuote">Memento Mori: Remember you must die</span>
+            </div>
           </div>
-          <div class="memento-mori-bar-container">
-            <div class="memento-mori-bar" id="memento-mori-bar"></div>
-          </div>
-          <div class="memento-mori-info">
-            <span class="memento-mori-quote" data-i18n="overview.mementoQuote">Memento Mori: Remember you must
-              die</span>
+
+          <!-- Daily Goal Progress Widget -->
+          <div class="daily-goal-widget" id="daily-goal-widget">
+            <div class="daily-goal-header">
+              <div class="daily-goal-title">
+                <svg class="goal-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <circle cx="12" cy="12" r="6"></circle>
+                  <circle cx="12" cy="12" r="2"></circle>
+                </svg>
+                <span data-i18n="goal.title">Daily Screen Time Goal</span>
+              </div>
+              <div class="daily-goal-badge" id="daily-goal-badge">
+                <span id="daily-goal-badge-text" data-i18n="goal.onTrack">On Track</span>
+              </div>
+            </div>
+            <div class="daily-goal-bar-container">
+              <div class="daily-goal-bar" id="daily-goal-bar" style="width: 0%;"></div>
+            </div>
+            <div class="daily-goal-stats">
+              <span id="daily-goal-progress-text">0m / 4h 0m (0%)</span>
+              <span id="daily-goal-productive-text" class="daily-goal-subtext"></span>
+            </div>
           </div>
         </div>
 
-        <!-- Daily Goal Progress Widget -->
-        <div class="daily-goal-widget" id="daily-goal-widget">
-          <div class="daily-goal-header">
-            <div class="daily-goal-title">
-              <svg class="goal-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <circle cx="12" cy="12" r="6"></circle>
-                <circle cx="12" cy="12" r="2"></circle>
-              </svg>
-              <span data-i18n="goal.title">Daily Screen Time Goal</span>
+        <!-- Overview Stat Cards Grid (5 Cards) -->
+        <div class="cards-grid overview-stats-grid">
+          <article class="card stat-card stat-total">
+            <div class="stat-card-header">
+              <div class="stat-card-icon icon-total">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+              </div>
+              <h3 data-i18n="overview.totalScreenTime">Total Screen Time</h3>
             </div>
-            <div class="daily-goal-badge" id="daily-goal-badge">
-              <span id="daily-goal-badge-text" data-i18n="goal.onTrack">On Track</span>
-            </div>
-          </div>
-          <div class="daily-goal-bar-container">
-            <div class="daily-goal-bar" id="daily-goal-bar" style="width: 0%;"></div>
-          </div>
-          <div class="daily-goal-stats">
-            <span id="daily-goal-progress-text">0m / 4h 0m (0%)</span>
-            <span id="daily-goal-productive-text" class="daily-goal-subtext"></span>
-          </div>
-        </div>
-
-        <div class="cards-grid">
-          <article class="card">
-            <h3 data-i18n="overview.activeWindow">Active Window</h3>
-            <p id="active-window-display">Waiting...</p>
-          </article>
-          <article class="card">
-            <h3 data-i18n="overview.totalScreenTime">Total Screen Time</h3>
             <p id="stat-total-time">0h 0m</p>
           </article>
-          <article class="card">
-            <h3 data-i18n="overview.productiveTime">Productive Time</h3>
+
+          <article class="card stat-card stat-productive">
+            <div class="stat-card-header">
+              <div class="stat-card-icon icon-productive">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                  <polyline points="17 6 23 6 23 12"></polyline>
+                </svg>
+              </div>
+              <h3 data-i18n="overview.productiveTime">Productive Time</h3>
+            </div>
             <p id="stat-productive-time">0h 0m</p>
           </article>
-          <article class="card">
-            <h3 data-i18n="overview.breakCount">Break Count</h3>
-            <p id="stat-break-count">0</p>
+
+          <article class="card stat-card stat-distracting">
+            <div class="stat-card-header">
+              <div class="stat-card-icon icon-distracting">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+              <h3 data-i18n="overview.distractingTime">Distracting Time</h3>
+            </div>
+            <p id="stat-distracting-time">0h 0m</p>
           </article>
-          <article class="card">
-            <h3 data-i18n="overview.longestSession">Longest Session</h3>
+
+          <article class="card stat-card stat-longest">
+            <div class="stat-card-header">
+              <div class="stat-card-icon icon-longest">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+              </div>
+              <h3 data-i18n="overview.longestSession">Longest Session</h3>
+            </div>
             <p id="stat-longest-session">0h 0m</p>
           </article>
-          <article class="card">
-            <h3 data-i18n="overview.distractingTime">Distracting Time</h3>
-            <p id="stat-distracting-time">0h 0m</p>
+
+          <article class="card stat-card stat-break">
+            <div class="stat-card-header">
+              <div class="stat-card-icon icon-break">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+                  <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+                  <line x1="6" y1="1" x2="6" y2="4"></line>
+                  <line x1="10" y1="1" x2="10" y2="4"></line>
+                  <line x1="14" y1="1" x2="14" y2="4"></line>
+                </svg>
+              </div>
+              <h3 data-i18n="overview.breakCount">Break Count</h3>
+            </div>
+            <p id="stat-break-count">0</p>
           </article>
         </div>
       </section>

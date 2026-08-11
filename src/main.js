@@ -1953,94 +1953,94 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  const activeWindowDisplayEl = document.getElementById("active-window-display");
-  if (activeWindowDisplayEl) {
-    listen("active_window", (event) => {
-      const app = event.payload.app_name;
-      const title = event.payload.title;
+  listen("active_window", (event) => {
+    const app = event.payload.app_name;
+    const title = event.payload.title;
+    const activeWindowDisplayEl = document.getElementById("active-window-display");
+    if (activeWindowDisplayEl) {
       if (title.toLowerCase().includes(app.toLowerCase())) {
         activeWindowDisplayEl.textContent = title;
       } else {
         activeWindowDisplayEl.textContent = `${app} - ${title}`;
       }
+    }
 
-      // Stoic notification: show a native Windows notification when a distracting app becomes active.
-      try {
-        const enabled = localStorage.getItem('stoic_notifications_enabled');
-        // default: enabled if not explicitly disabled
-        if (enabled === null || enabled === 'true') {
-          const nameLower = app.toLowerCase();
-          const distractingKeywords = [
-            '(distracting)', 'twitch', 'youtube', 'shorts', 'spotify', 'discord', 'steam', 'epic', 'instagram', 'facebook', 'twitter', 'tiktok', 'reddit', 'netflix'
-          ];
-          const isDistracting = distractingKeywords.some(k => nameLower.includes(k));
-          if (isDistracting) {
-            // Cancel any pending stoic notification for a different app
-            if (window._stoicPendingApp && window._stoicPendingApp !== app) {
-              try { clearTimeout(window._stoicTimerId); } catch (e) {}
-              window._stoicPendingApp = null;
-              window._stoicTimerId = null;
-            }
+    // Stoic notification: show a native Windows notification when a distracting app becomes active.
+    try {
+      const enabled = localStorage.getItem('stoic_notifications_enabled');
+      // default: enabled if not explicitly disabled
+      if (enabled === null || enabled === 'true') {
+        const nameLower = app.toLowerCase();
+        const distractingKeywords = [
+          '(distracting)', 'twitch', 'youtube', 'shorts', 'spotify', 'discord', 'steam', 'epic', 'instagram', 'facebook', 'twitter', 'tiktok', 'reddit', 'netflix'
+        ];
+        const isDistracting = distractingKeywords.some(k => nameLower.includes(k));
+        if (isDistracting) {
+          // Cancel any pending stoic notification for a different app
+          if (window._stoicPendingApp && window._stoicPendingApp !== app) {
+            try { clearTimeout(window._stoicTimerId); } catch (e) {}
+            window._stoicPendingApp = null;
+            window._stoicTimerId = null;
+          }
 
-            // If we've already notified for this app session, skip
-            if (window._lastStoicNotifiedApp === app) {
-              // nothing
-            } else if (window._stoicPendingApp === app) {
-              // timer already scheduled for this app, do nothing
-            } else {
-              // schedule a delayed notification to avoid spam (4s)
-              window._stoicPendingApp = app;
-              window._stoicTimerId = setTimeout(() => {
-                try {
-                  // double-check we haven't already notified
-                  if (window._lastStoicNotifiedApp === app) return;
+          // If we've already notified for this app session, skip
+          if (window._lastStoicNotifiedApp === app) {
+            // nothing
+          } else if (window._stoicPendingApp === app) {
+            // timer already scheduled for this app, do nothing
+          } else {
+            // schedule a delayed notification to avoid spam (4s)
+            window._stoicPendingApp = app;
+            window._stoicTimerId = setTimeout(() => {
+              try {
+                // double-check we haven't already notified
+                if (window._lastStoicNotifiedApp === app) return;
 
-                  const stoicQuotes = [
-                    'Başkalarının davranışlarını kontrol edemezsin; yalnızca kendi tepkilerini kontrol edebilirsin. — Epiktetos',
-                    'Bugün için küçük şeylere değer ver; büyük şeyler onlara bağlıdır. — Marcus Aurelius',
-                    'Önemli olan zamanın tüketilmesi değil, nasıl kullanıldığıdır. — Seneca',
-                    'Rahatsızlık geçicidir; erdem kalıcıdır. — Epiktetos',
-                    'Sabırlı ol; her şey zamanla yerine oturur. — Marcus Aurelius',
-                    'İç huzurunu dış koşullara bağlama. — Seneca'
-                  ];
-                  const quote = stoicQuotes[Math.floor(Math.random() * stoicQuotes.length)];
-                  const notifTitle = `Stoik Hatırlatma — ${app}`;
+                const stoicQuotes = [
+                  'Başkalarının davranışlarını kontrol edemezsin; yalnızca kendi tepkilerini kontrol edebilirsin. — Epiktetos',
+                  'Bugün için küçük şeylere değer ver; büyük şeyler onlara bağlıdır. — Marcus Aurelius',
+                  'Önemli olan zamanın tüketilmesi değil, nasıl kullanıldığıdır. — Seneca',
+                  'Rahatsızlık geçicidir; erdem kalıcıdır. — Epiktetos',
+                  'Sabırlı ol; her şey zamanla yerine oturur. — Marcus Aurelius',
+                  'İç huzurunu dış koşullara bağlama. — Seneca'
+                ];
+                const quote = stoicQuotes[Math.floor(Math.random() * stoicQuotes.length)];
+                const notifTitle = `Stoik Hatırlatma — ${app}`;
 
-                  if (typeof invoke === 'function') {
-                    invoke('show_stoic_notification', { title: notifTitle, body: quote }).catch(() => {});
-                  } else if (typeof Notification !== 'undefined') {
-                    try {
-                      new Notification(notifTitle, { body: quote });
-                    } catch (error) {
-                      if (Notification.permission !== 'denied') {
-                        Notification.requestPermission().then((perm) => {
-                          if (perm === 'granted') new Notification(notifTitle, { body: quote });
-                        });
-                      }
+                if (typeof invoke === 'function') {
+                  invoke('show_stoic_notification', { title: notifTitle, body: quote }).catch(() => {});
+                } else if (typeof Notification !== 'undefined') {
+                  try {
+                    new Notification(notifTitle, { body: quote });
+                  } catch (error) {
+                    if (Notification.permission !== 'denied') {
+                      Notification.requestPermission().then((perm) => {
+                        if (perm === 'granted') new Notification(notifTitle, { body: quote });
+                      });
                     }
                   }
-
-                  window._lastStoicNotifiedApp = app;
-                } catch (e) {
-                  // swallow
-                } finally {
-                  window._stoicPendingApp = null;
-                  window._stoicTimerId = null;
                 }
-              }, 4000);
-            }
-          } else {
-            // not distracting: cancel any pending notification
-            if (window._stoicTimerId) {
-              try { clearTimeout(window._stoicTimerId); } catch (e) {}
-              window._stoicPendingApp = null;
-              window._stoicTimerId = null;
-            }
+
+                window._lastStoicNotifiedApp = app;
+              } catch (e) {
+                // swallow
+              } finally {
+                window._stoicPendingApp = null;
+                window._stoicTimerId = null;
+              }
+            }, 4000);
+          }
+        } else {
+          // not distracting: cancel any pending notification
+          if (window._stoicTimerId) {
+            try { clearTimeout(window._stoicTimerId); } catch (e) {}
+            window._stoicPendingApp = null;
+            window._stoicTimerId = null;
           }
         }
-      } catch (e) { /* swallow errors to avoid breaking UI */ }
-    });
-  }
+      }
+    } catch (e) { /* swallow errors to avoid breaking UI */ }
+  });
 
   const showDbBtn = document.getElementById("show-db-btn");
   const dbOutputEl = document.getElementById("db-output");

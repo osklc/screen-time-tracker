@@ -2597,7 +2597,7 @@ dependencies = [
 
 [[package]]
 name = "kairos"
-version = "1.5.3"
+version = "1.5.4"
 dependencies = [
  "active-win-pos-rs",
  "battery",
