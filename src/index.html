@@ -238,6 +238,29 @@
               <span id="daily-goal-productive-text" class="daily-goal-subtext"></span>
             </div>
           </div>
+
+          <!-- Ideal Time Balance Widget -->
+          <div class="ideal-time-widget" id="ideal-time-widget">
+            <div class="ideal-time-header">
+              <div class="ideal-time-title">
+                <svg class="ideal-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                <span data-i18n="idealTime.title">Ideal Time Balance</span>
+              </div>
+              <div class="ideal-time-ratio-badge" id="ideal-time-ratio-badge">
+                <span id="ideal-time-ratio-text">0% Productive</span>
+              </div>
+            </div>
+            <div class="ideal-time-bar-container">
+              <div class="ideal-time-fill-productive" id="ideal-time-fill-productive" style="width: 0%;"></div>
+              <div class="ideal-time-fill-neutral" id="ideal-time-fill-neutral" style="width: 0%;"></div>
+              <div class="ideal-time-fill-distracting" id="ideal-time-fill-distracting" style="width: 0%;"></div>
+            </div>
+            <div class="ideal-time-footer">
+              <span id="ideal-time-guide-text" class="ideal-time-guide-text">Calculating balance...</span>
+            </div>
+          </div>
         </div>
 
         <!-- Overview Stat Cards Grid (5 Cards) -->
@@ -799,6 +822,34 @@
               <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
                 <button type="button" id="save-daily-goal-btn" class="btn-productive" style="max-width: 220px;" data-i18n="goal.save">Save Goal Settings</button>
                 <span id="save-daily-goal-status" style="display: none; color: #4CAF50; font-size: 0.9rem; font-weight: 500;" data-i18n="goal.saved">Goal settings saved!</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- App-Specific Time Limits Settings -->
+          <div class="setting-item">
+            <p class="setting-label" data-i18n="appLimits.title">App-Specific Time Limits</p>
+            <div class="goal-settings-box">
+              <div class="app-limit-form-grid" style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px;">
+                <div style="flex: 1; min-width: 160px;">
+                  <label for="app-limit-select" style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="appLimits.appName">Select App</label>
+                  <select id="app-limit-select" class="setting-select" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary);"></select>
+                </div>
+                <div style="width: 130px;">
+                  <label for="app-limit-minutes" style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="appLimits.maxMinutes">Max Minutes / Day</label>
+                  <input type="number" id="app-limit-minutes" min="1" max="1440" value="30" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary);" />
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px; padding-bottom: 8px;">
+                  <input type="checkbox" id="app-limit-notify" checked />
+                  <label for="app-limit-notify" style="font-size: 0.85rem;" data-i18n="appLimits.notify">Notify</label>
+                </div>
+                <div>
+                  <button type="button" id="save-app-limit-btn" class="btn-productive" style="padding: 8px 16px; white-space: nowrap;" data-i18n="appLimits.addLimit">Save Limit</button>
+                </div>
+              </div>
+              <span id="app-limit-status-msg" style="display: none; color: #4CAF50; font-size: 0.85rem; font-weight: 500; margin-bottom: 8px;"></span>
+              <div id="app-limits-list" class="app-limits-list" style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                <!-- populated dynamically -->
               </div>
             </div>
           </div>

@@ -392,6 +392,210 @@ function initDailyGoalSettingsUI() {
   });
 }
 
+// ── Ideal Time Balance Widget ──
+
+function renderIdealTimeBar(summary) {
+  const widgetEl = document.getElementById("ideal-time-widget");
+  const fillProdEl = document.getElementById("ideal-time-fill-productive");
+  const fillNeutEl = document.getElementById("ideal-time-fill-neutral");
+  const fillDistEl = document.getElementById("ideal-time-fill-distracting");
+  const ratioTextEl = document.getElementById("ideal-time-ratio-text");
+  const guideTextEl = document.getElementById("ideal-time-guide-text");
+
+  if (!widgetEl || !fillProdEl || !fillNeutEl || !fillDistEl || !ratioTextEl || !guideTextEl) return;
+
+  const total = summary?.total_screen_time_seconds || 0;
+  const prod = summary?.productive_time_seconds || 0;
+  const dist = summary?.distracting_time_seconds || 0;
+  const neutral = Math.max(0, total - prod - dist);
+
+  if (total === 0) {
+    fillProdEl.style.width = "0%";
+    fillNeutEl.style.width = "0%";
+    fillDistEl.style.width = "0%";
+    ratioTextEl.textContent = "0% Productive";
+    guideTextEl.textContent = translate("idealTime.onTrack");
+    return;
+  }
+
+  const prodPct = Math.round((prod / total) * 100);
+  const neutPct = Math.round((neutral / total) * 100);
+  const distPct = Math.max(0, 100 - prodPct - neutPct);
+
+  fillProdEl.style.width = `${prodPct}%`;
+  fillNeutEl.style.width = `${neutPct}%`;
+  fillDistEl.style.width = `${distPct}%`;
+
+  ratioTextEl.textContent = `${prodPct}% ${translate("daily.productive")}`;
+
+  if (prodPct >= 60) {
+    guideTextEl.textContent = translate("idealTime.onTrack");
+  } else if (distPct <= 25) {
+    guideTextEl.textContent = translate("idealTime.balanced");
+  } else {
+    guideTextEl.textContent = translate("idealTime.needsFocus");
+  }
+}
+
+// ── App-Specific Time Limits ──
+
+async function initAppLimits() {
+  const selectEl = document.getElementById("app-limit-select");
+  const minutesInput = document.getElementById("app-limit-minutes");
+  const notifyCheck = document.getElementById("app-limit-notify");
+  const saveBtn = document.getElementById("save-app-limit-btn");
+  const statusMsg = document.getElementById("app-limit-status-msg");
+
+  if (!selectEl || !saveBtn) return;
+
+  await populateAppLimitSelect();
+  await renderAppLimitsList();
+
+  saveBtn.addEventListener("click", async () => {
+    const appName = selectEl.value;
+    const minutes = parseInt(minutesInput.value, 10) || 0;
+    const notifyEnabled = notifyCheck ? notifyCheck.checked : true;
+
+    if (!appName || minutes <= 0) return;
+
+    try {
+      await invoke("set_app_limit", { appName, maxMinutes: minutes, notifyEnabled });
+      if (statusMsg) {
+        statusMsg.textContent = translate("appLimits.limitSaved");
+        statusMsg.style.display = "inline";
+        setTimeout(() => { statusMsg.style.display = "none"; }, 2500);
+      }
+      await renderAppLimitsList();
+    } catch (err) {
+      console.error("Failed to save app limit:", err);
+    }
+  });
+}
+
+async function populateAppLimitSelect() {
+  const selectEl = document.getElementById("app-limit-select");
+  if (!selectEl) return;
+
+  try {
+    const apps = await invoke("get_all_apps");
+    selectEl.innerHTML = "";
+    if (!apps || apps.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = translate("settings.noApps");
+      selectEl.appendChild(opt);
+      return;
+    }
+    apps.forEach(app => {
+      const opt = document.createElement("option");
+      opt.value = app.app_name;
+      opt.textContent = app.app_name;
+      selectEl.appendChild(opt);
+    });
+  } catch (err) {
+    console.error("Failed to populate app limit select:", err);
+  }
+}
+
+async function renderAppLimitsList() {
+  const container = document.getElementById("app-limits-list");
+  if (!container) return;
+
+  try {
+    const limits = await invoke("get_app_limits");
+    container.innerHTML = "";
+
+    if (!limits || limits.length === 0) {
+      container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.88rem;">${translate("appLimits.noLimits")}</p>`;
+      return;
+    }
+
+    limits.forEach(limit => {
+      const item = document.createElement("div");
+      item.className = "app-limit-item";
+
+      const info = document.createElement("div");
+      info.className = "app-limit-info";
+
+      const name = document.createElement("span");
+      name.className = "app-limit-name";
+      name.textContent = limit.app_name;
+
+      const time = document.createElement("span");
+      time.className = "app-limit-time";
+      time.textContent = `${limit.max_minutes}m / day`;
+
+      info.appendChild(name);
+      info.appendChild(time);
+
+      const actions = document.createElement("div");
+      actions.className = "app-limit-actions";
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn-delete-limit";
+      delBtn.textContent = translate("common.close");
+      delBtn.addEventListener("click", async () => {
+        try {
+          await invoke("delete_app_limit", { appName: limit.app_name });
+          await renderAppLimitsList();
+        } catch (err) {
+          console.error("Failed to delete app limit:", err);
+        }
+      });
+
+      actions.appendChild(delBtn);
+      item.appendChild(info);
+      item.appendChild(actions);
+      container.appendChild(item);
+    });
+  } catch (err) {
+    console.error("Failed to render app limits list:", err);
+  }
+}
+
+async function checkAppLimitsExceeded() {
+  try {
+    const limits = await invoke("get_app_limits");
+    if (!limits || limits.length === 0) return;
+
+    const usages = await invoke("get_app_usage");
+    if (!usages) return;
+
+    const usageMap = new Map();
+    usages.forEach(u => usageMap.set(u.app_name, u.duration_seconds));
+
+    const todayKey = new Date().toISOString().slice(0, 10);
+
+    for (const limit of limits) {
+      const durationSec = usageMap.get(limit.app_name) || 0;
+      const maxSec = limit.max_minutes * 60;
+
+      if (durationSec >= maxSec && limit.notify_enabled) {
+        const notifKey = `app_limit_notified_${todayKey}_${limit.app_name}`;
+        if (!localStorage.getItem(notifKey)) {
+          localStorage.setItem(notifKey, "true");
+
+          const title = translate("appLimits.exceededNotifyTitle");
+          const bodyTemplate = translate("appLimits.exceededNotifyBody");
+          const body = bodyTemplate.replace("{app}", limit.app_name);
+
+          if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+            new Notification(title, { body });
+          } else if (typeof Notification !== "undefined" && Notification.permission !== "denied") {
+            Notification.requestPermission().then(permission => {
+              if (permission === "granted") {
+                new Notification(title, { body });
+              }
+            });
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Failed to check app limits:", err);
+  }
+}
+
 async function fetchAndRenderSummary() {
   const statTotalEl = document.getElementById("stat-total-time");
   const statProdEl = document.getElementById("stat-productive-time");
@@ -411,9 +615,9 @@ async function fetchAndRenderSummary() {
     const pomoStats = loadPomodoroStats();
     statBreakEl.textContent = pomoStats.breaksTaken.toString();
 
-    statLongestEl.textContent = formatDuration(summary.longest_session_seconds);
-
     updateDailyGoalWidget(summary);
+    renderIdealTimeBar(summary);
+    checkAppLimitsExceeded();
   } catch (err) {
     console.error("Failed to fetch summary:", err);
   }
@@ -1666,6 +1870,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   fetchAndRenderAppUsage();
   initMementoMoriWidget();
   initDailyGoalSettingsUI();
+  initAppLimits();
 
   function refreshActivePage() {
     renderCurrentDate(currentDateEl);
@@ -1681,6 +1886,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       updateEnergyUI();
     } else if (pageId === "page-settings") {
       loadAppCategories();
+      populateAppLimitSelect();
+      renderAppLimitsList();
     } else if (pageId === "page-daily") {
       if (screenTimePeriod === "daily") {
         fetchAndRenderDailyStats();

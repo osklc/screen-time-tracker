@@ -853,6 +853,15 @@ fn init_db(app_handle: &tauri::AppHandle) -> SqlResult<Connection> {
         )",
         [],
     )?;
+
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS app_limits (
+            app_name TEXT PRIMARY KEY,
+            max_minutes INTEGER NOT NULL,
+            notify_enabled BOOLEAN DEFAULT 1
+        )",
+        [],
+    )?;
     
     Ok(conn)
 }
@@ -1062,6 +1071,77 @@ fn get_app_usage(app_handle: tauri::AppHandle) -> Result<Vec<AppUsage>, String> 
     }
     
     Ok(usages)
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+struct AppLimit {
+    app_name: String,
+    max_minutes: i64,
+    notify_enabled: bool,
+}
+
+#[tauri::command]
+fn get_app_limits(app_handle: tauri::AppHandle) -> Result<Vec<AppLimit>, String> {
+    let db_path = app_handle.path().app_data_dir().unwrap().join("tracker.db");
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+
+    let mut stmt = conn.prepare(
+        "SELECT app_name, max_minutes, notify_enabled FROM app_limits ORDER BY app_name ASC"
+    ).map_err(|e| e.to_string())?;
+
+    let rows = stmt.query_map([], |row| {
+        Ok(AppLimit {
+            app_name: row.get(0)?,
+            max_minutes: row.get(1)?,
+            notify_enabled: row.get(2)?,
+        })
+    }).map_err(|e| e.to_string())?;
+
+    let mut limits = Vec::new();
+    for row in rows {
+        if let Ok(limit) = row {
+            limits.push(limit);
+        }
+    }
+    Ok(limits)
+}
+
+#[tauri::command]
+fn set_app_limit(
+    app_handle: tauri::AppHandle,
+    app_name: String,
+    max_minutes: i64,
+    notify_enabled: bool,
+) -> Result<(), String> {
+    let db_path = app_handle.path().app_data_dir().unwrap().join("tracker.db");
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+
+    if max_minutes <= 0 {
+        conn.execute(
+            "DELETE FROM app_limits WHERE app_name = ?1",
+            params![app_name],
+        ).map_err(|e| e.to_string())?;
+    } else {
+        conn.execute(
+            "INSERT OR REPLACE INTO app_limits (app_name, max_minutes, notify_enabled) VALUES (?1, ?2, ?3)",
+            params![app_name, max_minutes, notify_enabled],
+        ).map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+fn delete_app_limit(app_handle: tauri::AppHandle, app_name: String) -> Result<(), String> {
+    let db_path = app_handle.path().app_data_dir().unwrap().join("tracker.db");
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+
+    conn.execute(
+        "DELETE FROM app_limits WHERE app_name = ?1",
+        params![app_name],
+    ).map_err(|e| e.to_string())?;
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -1742,7 +1822,7 @@ pub fn run() {
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, get_sessions, get_today_summary, get_all_apps, set_app_category, get_app_usage, get_daily_stats, get_weekly_stats, get_monthly_stats, get_stats_for_range, get_range_summary, get_pending_reviews, resolve_review, get_setting, set_setting, get_audio_file, set_power_smoothing_mode, get_power_smoothing_mode, show_stoic_notification, check_update, install_update, export_data, get_sentry_dsn, send_manual_bug_report])
+        .invoke_handler(tauri::generate_handler![greet, get_sessions, get_today_summary, get_all_apps, set_app_category, get_app_usage, get_app_limits, set_app_limit, delete_app_limit, get_daily_stats, get_weekly_stats, get_monthly_stats, get_stats_for_range, get_range_summary, get_pending_reviews, resolve_review, get_setting, set_setting, get_audio_file, set_power_smoothing_mode, get_power_smoothing_mode, show_stoic_notification, check_update, install_update, export_data, get_sentry_dsn, send_manual_bug_report])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

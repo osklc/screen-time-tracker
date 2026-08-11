@@ -1776,6 +1776,134 @@ body[data-theme="cyberpunk"] .chart-container div[id*="-empty"] {
   margin-top: 8px;
 }
 
+/* ── Ideal Time Balance Widget & App Limits ── */
+.ideal-time-widget {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.ideal-time-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.ideal-time-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+
+.ideal-time-title .ideal-icon {
+  color: var(--accent-color);
+}
+
+.ideal-time-ratio-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgba(78, 158, 229, 0.15);
+  color: var(--accent-color);
+  border: 1px solid rgba(78, 158, 229, 0.3);
+}
+
+.ideal-time-bar-container {
+  width: 100%;
+  height: 12px;
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.ideal-time-fill-productive {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #66BB6A);
+  transition: width 0.4s ease;
+}
+
+.ideal-time-fill-neutral {
+  height: 100%;
+  background: linear-gradient(90deg, #9E9E9E, #BDBDBD);
+  transition: width 0.4s ease;
+}
+
+.ideal-time-fill-distracting {
+  height: 100%;
+  background: linear-gradient(90deg, #EF5350, #E53935);
+  transition: width 0.4s ease;
+}
+
+.ideal-time-footer {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.app-limit-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.88rem;
+}
+
+.app-limit-item .app-limit-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-limit-item .app-limit-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.app-limit-item .app-limit-time {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.app-limit-item .app-limit-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-delete-limit {
+  background: rgba(244, 67, 54, 0.1);
+  color: #F44336;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-delete-limit:hover {
+  background: #F44336;
+  color: #fff;
+}
+
 .goal-input-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

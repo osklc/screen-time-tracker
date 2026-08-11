@@ -169,7 +169,21 @@
       "goal.save": "Save Goal Settings",
       "goal.saved": "Goal settings saved!",
       "goal.notificationTitle": "Daily Screen Time Limit Reached",
-      "goal.notificationBody": "You have reached your daily screen time limit."
+      "goal.notificationBody": "You have reached your daily screen time limit.",
+      "idealTime.title": "Ideal Time Balance",
+      "idealTime.onTrack": "Excellent productivity ratio today!",
+      "idealTime.balanced": "Good balance, keep it up!",
+      "idealTime.needsFocus": "Distracting time is exceeding recommended levels.",
+      "appLimits.title": "App-Specific Time Limits",
+      "appLimits.appName": "Select App",
+      "appLimits.maxMinutes": "Max Minutes / Day",
+      "appLimits.addLimit": "Save App Limit",
+      "appLimits.notify": "Notify when limit reached",
+      "appLimits.noLimits": "No application time limits configured.",
+      "appLimits.limitSaved": "App limit saved!",
+      "appLimits.limitDeleted": "App limit removed.",
+      "appLimits.exceededNotifyTitle": "App Time Limit Reached",
+      "appLimits.exceededNotifyBody": "You have reached your daily limit for {app}."
     },
     "tr": {
       "brand.title": "Kairos",
@@ -339,7 +353,21 @@
       "goal.save": "Hedef Ayarlarını Kaydet",
       "goal.saved": "Hedef ayarları kaydedildi!",
       "goal.notificationTitle": "Günlük Ekran Süresi Limiti Doldu",
-      "goal.notificationBody": "Belirlediğiniz günlük ekran süresi limitine ulaştınız."
+      "goal.notificationBody": "Belirlediğiniz günlük ekran süresi limitine ulaştınız.",
+      "idealTime.title": "İdeal Zaman Dengesi",
+      "idealTime.onTrack": "Bugün harika bir üretkenlik oranına sahipsiniz!",
+      "idealTime.balanced": "Dengeli gidiyorsunuz, böyle devam edin!",
+      "idealTime.needsFocus": "Dikkat dağıtıcı süre önerilen seviyelerin üzerinde.",
+      "appLimits.title": "Uygulama Bazlı Süre Sınırları",
+      "appLimits.appName": "Uygulama Seçin",
+      "appLimits.maxMinutes": "Maksimum Dakika / Gün",
+      "appLimits.addLimit": "Uygulama Limitini Kaydet",
+      "appLimits.notify": "Limit dolduğunda bildir",
+      "appLimits.noLimits": "Henüz uygulama bazlı süre sınırı tanımlanmadı.",
+      "appLimits.limitSaved": "Uygulama limiti kaydedildi!",
+      "appLimits.limitDeleted": "Uygulama limiti kaldırıldı.",
+      "appLimits.exceededNotifyTitle": "Uygulama Süre Limiti Doldu",
+      "appLimits.exceededNotifyBody": "{app} için belirlenen günlük süre sınırına ulaştınız."
     }
   }
 }
